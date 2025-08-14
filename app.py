@@ -6,6 +6,13 @@ import requests
 
 app = Flask(__name__)
 
+# Version string to bust browser cache for static assets
+ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
+
+@app.context_processor
+def inject_asset_version():
+    return {"ASSET_VERSION": ASSET_VERSION}
+
 # Simple in-memory cache; good enough for small deployments
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 

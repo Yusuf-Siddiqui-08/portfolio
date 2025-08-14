@@ -5,13 +5,16 @@
   <title>Yusuf's GitHub Repositories</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Live list of GitHub repositories for Yusuf-Siddiqui-08, fetched directly from GitHub.">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
 </head>
 <body>
   <header class="site-header">
     <div class="container">
       <div class="brand">
-        <div class="logo" aria-hidden="true">&lt;/&gt;</div>
+        <a href="{{ url_for('home') }}" class="logo-link" aria-label="Home">
+          <img class="logo" src="{{ url_for('static', filename='favicon.svg') }}" alt="YS logo">
+        </a>
         <div class="brand-text">
           <h1 class="site-title">Yusuf's GitHub Repositories</h1>
           <p class="site-subtitle">Fetched live from GitHub</p>
@@ -36,6 +39,7 @@
     <section class="section">
       <div class="container">
         <div class="hero-ctas" style="margin-bottom: 16px;">
+          <a class="btn" href="#all-projects">Explore all projects</a>
           <a class="btn primary" href="https://github.com/Yusuf-Siddiqui-08?tab=repositories" target="_blank" rel="noopener">
             <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -145,7 +149,7 @@
           </div>
         </section>
 
-        <h2 style="margin-top:24px;">My Repositories</h2>
+        <h2 id="all-projects" style="margin-top:24px;">My Repositories</h2>
         <p class="note">This list is retrieved using a GET request to the GitHub API when the page loads.</p>
 
         <div id="status" class="note">Loading repositories…</div>
@@ -174,6 +178,6 @@
     </div>
   </footer>
 
-  <script src="{{ url_for('static', filename='repos.js') }}"></script>
+  <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}"></script>
 </body>
 </html>

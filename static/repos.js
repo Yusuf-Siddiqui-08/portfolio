@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize carousels
   initCarousels();
 
+  // Initialize button ripple/splash tracking
+  initButtonRipples();
+
   fetchRepos();
 });
 
@@ -38,6 +41,57 @@ function initCarousels() {
     update();
   }
   document.querySelectorAll('[data-carousel]').forEach(initCarousel);
+}
+
+// Button ripple hover effect: track mouse position within each .btn and set CSS vars
+function initButtonRipples() {
+  const buttons = Array.from(document.querySelectorAll('.btn'));
+  buttons.forEach((btn) => {
+    if (btn.dataset.rippleInit === '1') return;
+    btn.dataset.rippleInit = '1';
+    // Wrap inner HTML to keep content above the ripple
+    if (!btn.querySelector('.btn-content')) {
+      const span = document.createElement('span');
+      span.className = 'btn-content';
+      while (btn.firstChild) span.appendChild(btn.firstChild);
+      btn.appendChild(span);
+    }
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      // Compute a scale large enough to cover button diagonal
+      const maxDim = Math.max(rect.width, rect.height);
+      const diag = Math.sqrt(rect.width * rect.width + rect.height * rect.height);
+      const scale = (diag / 16) + 2; // 16 is base ripple size; add padding
+      btn.style.setProperty('--r-scale', String(Math.ceil(scale)));
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      btn.style.setProperty('--mouse-x', x + 'px');
+      btn.style.setProperty('--mouse-y', y + 'px');
+      // Keep ripple fully expanded while hovered
+      btn.classList.add('rippling');
+    });
+    // On keyboard focus, center the splash
+    btn.addEventListener('focus', () => {
+      btn.style.setProperty('--mouse-x', '50%');
+      btn.style.setProperty('--mouse-y', '50%');
+    });
+    // Clean up vars when leaving
+    btn.addEventListener('mouseleave', () => {
+      // Let ripple remain at last position and fade out smoothly even off-button
+      btn.classList.remove('rippling');
+      btn.classList.add('rippling-out');
+      if (btn._rippleCleanupTimer) {
+        clearTimeout(btn._rippleCleanupTimer);
+      }
+      btn._rippleCleanupTimer = window.setTimeout(() => {
+        btn.classList.remove('rippling-out');
+        btn.style.removeProperty('--mouse-x');
+        btn.style.removeProperty('--mouse-y');
+        btn.style.removeProperty('--r-scale');
+        btn._rippleCleanupTimer = null;
+      }, 500);
+    });
+  });
 }
 
 // Image Modal Functions
@@ -150,6 +204,8 @@ async function fetchRepos() {
     });
 
     container.appendChild(fragment);
+    // Initialize ripple behavior for newly added repo buttons
+    initButtonRipples();
   } catch (err) {
     console.error(err);
     statusEl.textContent = 'Failed to load repositories. Please try again later.';

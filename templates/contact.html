@@ -5,13 +5,16 @@
   <title>Contact Me</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Get in touch with Yusuf Siddiqui. Email, phone, and GitHub profile.">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
 </head>
 <body>
   <header class="site-header">
     <div class="container">
       <div class="brand">
-        <div class="logo" aria-hidden="true">&lt;/&gt;</div>
+        <a href="{{ url_for('home') }}" class="logo-link" aria-label="Home">
+          <img class="logo" src="{{ url_for('static', filename='favicon.svg') }}" alt="YS logo">
+        </a>
         <div class="brand-text">
           <h1 class="site-title">Contact Yusuf</h1>
           <p class="site-subtitle">Get in touch</p>
@@ -39,7 +42,7 @@
         <p class="note">Feel free to reach out using any of the methods below.</p>
 
         <div style="margin-top:16px;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;background:rgba(255,255,255,.03);">
-          <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="contact-buttons" style="display: flex; flex-direction: column; gap: 12px;">
             <a class="btn" href="mailto:yusufs98783@gmail.com">
               <span style="display:inline-flex;align-items:center;gap:8px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -81,8 +84,6 @@
     </div>
   </footer>
 
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}" defer></script>
 </body>
 </html>

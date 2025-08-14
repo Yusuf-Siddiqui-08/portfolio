@@ -5,29 +5,32 @@
   <title>Yusuf's GitHub Projects Portfolio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A curated portfolio of my software projects from GitHub, presented for university admissions reviewers.">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
 </head>
 <body>
   <header class="site-header">
     <div class="container">
       <div class="brand">
-        <div class="logo" aria-hidden="true">&lt;/&gt;</div>
+        <a href="{{ url_for('home') }}" class="logo-link" aria-label="Home">
+          <img class="logo" src="{{ url_for('static', filename='favicon.svg') }}" alt="YS logo">
+        </a>
         <div class="brand-text">
           <h1 class="site-title">Yusuf Siddiqui's Projects Portfolio</h1>
           <p class="site-subtitle">Curated from GitHub for university admissions</p>
         </div>
       </div>
       <nav class="actions">
+        <a class="btn" href="{{ url_for('repos') }}">View my projects</a>
+        <a class="btn" href="{{ url_for('contact') }}">Contact</a>
         <a class="btn primary" href="https://github.com/Yusuf-Siddiqui-08" target="_blank" rel="noopener">
           <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
+              <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19 .69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
             </svg>
             <span>View GitHub Profile</span>
           </span>
         </a>
-        <a class="btn" href="{{ url_for('repos') }}">View my projects</a>
-        <a class="btn" href="{{ url_for('contact') }}">Contact</a>
       </nav>
     </div>
   </header>
@@ -42,6 +45,8 @@
         </p>
         <div class="hero-ctas">
           <a class="btn" href="#about">Learn More</a>
+          <a class="btn" href="{{ url_for('repos') }}">Browse Projects</a>
+          <a class="btn" href="{{ url_for('contact') }}">Get in touch</a>
         </div>
       </div>
     </section>
@@ -51,10 +56,10 @@
         <div>
           <h3>What you'll find here</h3>
           <ul class="feature-list">
-            <li>Selected projects with clear descriptions and the problems they solve</li>
-            <li>Technologies used, design decisions, and key lessons learned</li>
-            <li>Links to source code, documentation, and live demos where available</li>
-            <li>Context about my interests and how each project fits my academic goals</li>
+            <li>Selected projects with clear descriptions and what they do</li>
+            <li>Technologies used, design decisions, and import features</li>
+            <li>Links to source code and documentation on GitHub</li>
+            <li>Hobby projects, software and hardware projects, and academic projects</li>
           </ul>
         </div>
         <div>
@@ -63,6 +68,82 @@
             GitHub repositories can be dense and technical. This site presents highlights and context so that
             admissions readers can quickly assess the scope, rigor, and outcomes of my work.
           </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section carousel-section">
+      <div class="container">
+        <h3 style="margin-top:0;">Selected Work</h3>
+        <p class="note">A quick visual tour of a few representative projects. Click any image to view it larger.</p>
+
+        <div class="spotlight-grid">
+          <article class="project-card">
+            <h4 class="spotlight-title"><a href="https://github.com/Yusuf-Siddiqui-08/Titanic-Survival-Using-Machine-Learning" target="_blank" rel="noopener">Titanic Survival Using Machine Learning</a></h4>
+            <p class="spotlight-desc">Based on user-given passenger class, passenger age and passenger gender, and using real Titanic passenger data and Machine Learning, this program will tell you if you are likely to survive.</p>
+            <div class="carousel" data-carousel>
+              <div class="carousel-viewport">
+                <div class="carousel-track">
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='1.png') }}" alt="Spotlight A - screen 1" onclick="openImageModal(this.src, this.alt)"></div>
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='2.png') }}" alt="Spotlight A - screen 2" onclick="openImageModal(this.src, this.alt)"></div>
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='3.png') }}" alt="Spotlight A - screen 3" onclick="openImageModal(this.src, this.alt)"></div>
+                </div>
+              </div>
+              <button class="carousel-btn prev" aria-label="Previous slide">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+              </button>
+              <button class="carousel-btn next" aria-label="Next slide">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">Tech: Python, Flask, HTML/CSS</p>
+          </article>
+
+          <article class="project-card">
+            <h4 class="spotlight-title"><a href="https://github.com/Yusuf-Siddiqui-08/Handwritten-Digit-Recognition" target="_blank" rel="noopener">Handwritten Digit Recognition</a></h4>
+            <p class="spotlight-desc">A Tkinter handwritten digit recognition app with a custom ML engine. Draw digits for real-time prediction with confidence, give thumbs up/down feedback to improve accuracy, undo, debug tools, array visualization, pattern management, duplicate removal, pattern count display, error-handled pattern storage, autocentering and storage optimization.</p>
+            <div class="carousel" data-carousel>
+              <div class="carousel-viewport">
+                <div class="carousel-track">
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='4.png') }}" alt="Spotlight B - screen 1" onclick="openImageModal(this.src, this.alt)"></div>
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='5.png') }}" alt="Spotlight B - screen 2" onclick="openImageModal(this.src, this.alt)"></div>
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='6.png') }}" alt="Spotlight B - screen 3" onclick="openImageModal(this.src, this.alt)"></div>
+                </div>
+              </div>
+              <button class="carousel-btn prev" aria-label="Previous slide">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+              </button>
+              <button class="carousel-btn next" aria-label="Next slide">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">Focus: UI polish, accessibility, performance</p>
+          </article>
+
+          <article class="project-card">
+            <h4 class="spotlight-title"><a href="https://github.com/Yusuf-Siddiqui-08/Arduino-and-Python-Morse-Translator" target="_blank" rel="noopener">Arduino and Python Morse Translator</a></h4>
+            <p class="spotlight-desc">A Python project that converts user-input phrases into Morse code and flashes them using an Arduino board. Supports repeated playback and handles letters, numbers, and symbols. Uses pyfirmata2 for Arduino communication.</p>
+            <div class="carousel" data-carousel>
+              <div class="carousel-viewport">
+                <div class="carousel-track">
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='9.png') }}" alt="Arduino Morse code translator setup" onclick="openImageModal(this.src, this.alt)"></div>
+                  <div class="slide"><img loading="lazy" src="{{ url_for('project_images', filename='8.png') }}" alt="Python Morse code interface" onclick="openImageModal(this.src, this.alt)"></div>
+                </div>
+              </div>
+              <button class="carousel-btn prev" aria-label="Previous slide">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+              </button>
+              <button class="carousel-btn next" aria-label="Next slide">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">Highlights: Prototyping, iteration, documentation</p>
+          </article>
+        </div>
+
+        <div class="hero-ctas" style="margin-top:8px;">
+          <a class="btn" href="{{ url_for('repos') }}">Explore all projects</a>
+          <a class="btn" href="{{ url_for('contact') }}">Contact me</a>
         </div>
       </div>
     </section>
@@ -78,9 +159,15 @@
     </div>
   </footer>
 
-  <script>
-    // Simple enhancement: set current year
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <!-- Image Modal for carousels -->
+  <div id="imageModal" class="modal" onclick="closeImageModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="modal-close" onclick="closeImageModal()" aria-label="Close">&times;</span>
+      <img id="modalImage" alt="Expanded project screenshot">
+      <div class="modal-caption"><p id="modalCaption"></p></div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}" defer></script>
 </body>
 </html>

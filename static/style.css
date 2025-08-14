@@ -1,23 +1,23 @@
 :root {
   /* Base color values for easy theming */
-  --panel-hex: #111827;
-  --primary-hex: #6366f1;
-  --accent-hex: #22d3ee;
+  --panel-hex: #1b103a;   /* deep neon purple panel */
+  --primary-hex: #6366f1; /* indigo (blue/purple) */
+  --accent-hex: #22d3ee;  /* cyan/blue accent */
   --white-hex: #ffffff;
   --black-hex: #000000;
 
   /* Base colors built from hex values */
-  --bg: #0f172a;
+  --bg: #0a0516;          /* dark purple background */
   --panel: var(--panel-hex);
-  --muted: #0b1220;
-  --text: #e5e7eb;
-  --text-dim: #9ca3af;
+  --muted: #120a26;       /* muted purple surface */
+  --text: #efe9ff;        /* light lavender text */
+  --text-dim: #b7a9f0;    /* dim lavender text */
   --white: var(--white-hex);
   --black: var(--black-hex);
 
   /* Brand colors built from hex values */
   --primary: var(--primary-hex);
-  --primary-600: #5457e0;
+  --primary-600: #5457e0; /* darker indigo */
   --accent: var(--accent-hex);
 
   /* Panel/Background variations using hex values with opacity */
@@ -57,6 +57,7 @@
 html, body {
   padding: 0;
   margin: 0;
+  scroll-behavior: smooth;
   background: radial-gradient(1200px 600px at 20% -10%, var(--gradient-accent), transparent 60%),
               radial-gradient(1200px 600px at 80% 110%, var(--gradient-primary), transparent 60%),
               var(--bg);
@@ -91,15 +92,7 @@ html, body {
 .logo {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  display: grid;
-  place-items: center;
-  color: white;
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: .5px;
-  box-shadow: var(--shadow);
+  display: block;
 }
 
 .brand-text .site-title {
@@ -129,15 +122,15 @@ html, body {
   color: var(--text);
   text-decoration: none;
   background: var(--white-04);
-  transition: transform .06s ease, border-color .2s ease, background .2s ease, color .2s ease;
+  transition: transform .06s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, filter .2s ease;
   will-change: transform;
+  position: relative;
+  overflow: hidden;
+  z-index: 0; /* create stacking context for ripple below content */
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  background: linear-gradient(135deg, var(--primary), var(--primary-600));
-  border-color: transparent;
-  color: var(--white);
 }
 
 .btn.primary {
@@ -153,6 +146,65 @@ html, body {
   filter: none;
 }
 
+/* Ripple/splash hover effect driven by --mouse-x/--mouse-y set via JS */
+.btn::before {
+  content: "";
+  position: absolute;
+  left: var(--mouse-x, 50%);
+  top: var(--mouse-y, 50%);
+  transform: translate(-50%, -50%) scale(0);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at center, var(--accent) 0%, var(--primary) 60%, var(--primary-600) 100%);
+  transition: transform .45s ease, opacity .45s ease;
+  opacity: .85;
+  z-index: 0; /* sit beneath the button content */
+}
+
+/* Make the splash larger so it fills the button */
+.btn:hover::before,
+.btn:focus-visible::before {
+  transform: translate(-50%, -50%) scale(var(--r-scale, 30));
+}
+
+/* Keep ripple active even after unhover until it fades out */
+.btn.rippling::before {
+  transform: translate(-50%, -50%) scale(var(--r-scale, 30));
+}
+
+/* Fade ripple out without shrinking to center */
+.btn.rippling-out::before {
+  opacity: 0;
+}
+
+/* For grey/default buttons, let the splash visually fill while preserving text contrast */
+.btn:not(.primary) {
+  isolation: isolate;
+}
+.btn:not(.primary)::before {
+  mix-blend-mode: normal;
+  background: radial-gradient(circle at center, var(--accent) 0%, var(--primary) 60%, var(--primary-600) 100%);
+}
+
+/* For primary buttons, keep existing gradient and show a subtle glow splash */
+.btn.primary::before {
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--white) 40%, transparent) 0%, color-mix(in srgb, var(--white) 10%, transparent) 70%);
+  opacity: .25;
+}
+
+/* Ensure text/icons render above the ripple */
+.btn .btn-content,
+.btn svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* Removed legacy reverse-fill rules */
+
+/* Grey reverse-fill removed */
+
 .hero {
   padding: 64px 0;
 }
@@ -163,7 +215,7 @@ html, body {
 }
 
 .hero-text {
-  color: var(--text-dim);
+  color: var(--white);
   max-width: 800px;
   margin: 0 0 20px 0;
 }
@@ -202,7 +254,7 @@ html, body {
 }
 
 .note {
-  color: var(--text-dim);
+  color: var(--white);
   font-size: 14px;
 }
 
@@ -228,6 +280,8 @@ html, body {
   color: var(--text);
   text-decoration: none;
   transition: transform .06s ease, background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .repo-button:hover {
@@ -237,6 +291,10 @@ html, body {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px var(--shadow-primary);
 }
+
+/* Ensure repo-button text/icons always render above ripple */
+.repo-button .btn-content,
+.repo-button svg { position: relative; z-index: 1; }
 
 /** Spotlight carousels **/
 .spotlight-grid {
@@ -386,7 +444,7 @@ html, body {
 }
 
 .spotlight-desc {
-  color: var(--text);
+  color: var(--text); /* keep spotlight descriptions non-white for hierarchy */
   font-size: 18px;
 }
 
@@ -494,8 +552,10 @@ html, body {
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     line-height: 1.6;
-    color: #e4e4e7;
-    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+    color: var(--text);
+    background: radial-gradient(1200px 600px at 20% -10%, var(--gradient-accent), transparent 60%),
+                radial-gradient(1200px 600px at 80% 110%, var(--gradient-primary), transparent 60%),
+                var(--bg);
     min-height: 100vh;
 }
 
@@ -508,7 +568,7 @@ body {
 /* Header styles */
 .site-header {
     padding: 20px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--white-06);
 }
 
 .site-header .container {
@@ -528,7 +588,7 @@ body {
 .logo {
     font-size: 24px;
     font-weight: bold;
-    color: #06b6d4;
+    color: var(--accent);
     font-family: 'Courier New', monospace;
 }
 
@@ -557,25 +617,25 @@ body {
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #e4e4e7;
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--white-14);
+    color: var(--text);
+    background: var(--white-04);
 }
 
 .btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: var(--white-08);
+    border-color: var(--white-14);
 }
 
 .btn.primary {
-    background: #06b6d4;
-    border-color: #06b6d4;
-    color: white;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
 }
 
 .btn.primary:hover {
-    background: #0891b2;
-    border-color: #0891b2;
+    background: var(--primary-600);
+    border-color: var(--primary-600);
 }
 
 /* Main content */
@@ -591,11 +651,11 @@ h2 {
     font-size: 28px;
     font-weight: 600;
     margin-bottom: 16px;
-    color: #f4f4f5;
+    color: var(--white);
 }
 
 .note {
-    color: #a1a1aa;
+    color: var(--text-dim);
     margin-bottom: 24px;
 }
 
@@ -612,15 +672,15 @@ h2 {
     align-items: center;
     gap: 16px;
     padding: 24px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--white-04);
+    border: 1px solid var(--white-08);
     border-radius: 12px;
     transition: all 0.3s ease;
 }
 
 .contact-box:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--white-08);
+    border-color: var(--white-14);
     transform: translateY(-2px);
 }
 
@@ -628,7 +688,7 @@ h2 {
     flex-shrink: 0;
     width: 64px;
     height: 64px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--white-06);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -637,7 +697,7 @@ h2 {
 }
 
 .contact-box:hover .contact-icon {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--white-08);
     transform: scale(1.05);
 }
 
@@ -649,20 +709,20 @@ h2 {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 4px;
-    color: #f4f4f5;
+    color: var(--white);
 }
 
 .contact-info p {
     font-size: 14px;
-    color: #a1a1aa;
+    color: var(--text-dim);
     margin-bottom: 8px;
 }
 
 .contact-link {
     display: inline-block;
     padding: 6px 12px;
-    background: #06b6d4;
-    color: white;
+    background: var(--primary);
+    color: var(--white);
     text-decoration: none;
     border-radius: 6px;
     font-size: 14px;
@@ -671,7 +731,7 @@ h2 {
 }
 
 .contact-link:hover {
-    background: #0891b2;
+    background: var(--primary-600);
     transform: translateY(-1px);
 }
 
@@ -724,4 +784,15 @@ h2 {
         text-align: center;
         min-width: 0;
     }
+}
+
+/* Contact page button sizing adjustments */
+.contact-buttons .btn {
+    align-self: flex-start;
+    min-width: 240px; /* less wide than full width */
+    padding: 14px 20px; /* thicker interior padding */
+}
+
+.contact-buttons .btn .btn-content {
+    padding: 2px 0; /* slight extra interior breathing room */
 }
