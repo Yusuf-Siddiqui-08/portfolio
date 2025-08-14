@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Yusuf's GitHub Repositories</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Live list of GitHub repositories for Yusuf-Siddiqui-08, fetched directly from GitHub.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">&lt;/&gt;</div>
+        <div class="brand-text">
+          <h1 class="site-title">Yusuf's GitHub Repositories</h1>
+          <p class="site-subtitle">Fetched live from GitHub</p>
+        </div>
+      </div>
+      <nav class="actions">
+        <a class="btn" href="{{ url_for('home') }}">Home</a>
+        <a class="btn" href="{{ url_for('contact') }}">Contact</a>
+        <a class="btn primary" href="https://github.com/Yusuf-Siddiqui-08" target="_blank" rel="noopener">
+          <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
+            </svg>
+            <span>View GitHub Profile</span>
+          </span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="hero-ctas" style="margin-bottom: 16px;">
+          <a class="btn primary" href="https://github.com/Yusuf-Siddiqui-08?tab=repositories" target="_blank" rel="noopener">
+            <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
+              </svg>
+              <span>View on GitHub</span>
+            </span>
+          </a>
+        </div>
+
+        <h2 style="margin-top:0;">Featured Projects</h2>
+        <p class="note">Highlighted projects showcasing different aspects of my programming skills and interests.</p>
+
+        <!-- Titanic Survival Machine Learning Project -->
+        <section class="section carousel-section muted">
+          <div class="container">
+            <div class="spotlight-split">
+              <a href="https://github.com/Yusuf-Siddiqui-08/Titanic-Survival-Using-Machine-Learning" target="_blank" rel="noopener" class="spotlight-text-link">
+                <div class="spotlight-text">
+                  <h3 class="spotlight-title">Titanic Survival Using Machine Learning</h3>
+                  <p class="spotlight-desc">Based on user-given passenger class, passenger age and passenger gender, and using real Titanic passenger data and Machine Learning, this program will tell you if you are likely to survive.</p>
+                </div>
+              </a>
+              <div class="spotlight-media">
+                <div class="carousel large" data-carousel>
+                  <div class="carousel-viewport">
+                    <div class="carousel-track">
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='1.png') }}" alt="Titanic ML screenshot 1" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='2.png') }}" alt="Titanic ML screenshot 2" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='3.png') }}" alt="Titanic ML screenshot 3" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="carousel-btn prev" aria-label="Previous slide">&#8249;</button>
+                  <button class="carousel-btn next" aria-label="Next slide">&#8250;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Handwritten Digit Recognition Project -->
+        <section class="section carousel-section">
+          <div class="container">
+            <div class="spotlight-split">
+              <div class="spotlight-media">
+                <div class="carousel large" data-carousel>
+                  <div class="carousel-viewport">
+                    <div class="carousel-track">
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='4.png') }}" alt="Handwritten digit recognition interface" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='5.png') }}" alt="Digit drawing canvas with prediction" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='6.png') }}" alt="ML model training visualization" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="carousel-btn prev" aria-label="Previous slide">&#8249;</button>
+                  <button class="carousel-btn next" aria-label="Next slide">&#8250;</button>
+                </div>
+              </div>
+              <a href="https://github.com/Yusuf-Siddiqui-08/Handwritten-Digit-Recognition" target="_blank" rel="noopener" class="spotlight-text-link">
+                <div class="spotlight-text">
+                  <h3 class="spotlight-title">Handwritten Digit Recognition</h3>
+                  <p class="spotlight-desc">A Tkinter handwritten digit recognition app with a custom ML engine. Draw digits for real-time prediction with confidence, give thumbs up/down feedback to improve accuracy, undo, debug tools, array visualization, pattern management, duplicate removal, pattern count display, error-handled pattern storage, autocentering and storage optimization.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- Arduino and Python Morse Translator Project -->
+        <section class="section carousel-section muted">
+          <div class="container">
+            <div class="spotlight-split">
+              <a href="https://github.com/Yusuf-Siddiqui-08/Arduino-and-Python-Morse-Translator" target="_blank" rel="noopener" class="spotlight-text-link">
+                <div class="spotlight-text">
+                  <h3 class="spotlight-title">Arduino and Python Morse Translator</h3>
+                  <p class="spotlight-desc">A Python project that converts user-input phrases into Morse code and flashes them using an Arduino board. Supports repeated playback and handles letters, numbers, and symbols. Uses pyfirmata2 for Arduino communication.</p>
+                </div>
+              </a>
+              <div class="spotlight-media">
+                <div class="carousel large" data-carousel>
+                  <div class="carousel-viewport">
+                    <div class="carousel-track">
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='9.png') }}" alt="Arduino Morse code translator setup" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                      <div class="slide">
+                        <img src="{{ url_for('project_images', filename='8.png') }}" alt="Python Morse code interface" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="openImageModal(this.src, this.alt)"/>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="carousel-btn prev" aria-label="Previous slide">&#8249;</button>
+                  <button class="carousel-btn next" aria-label="Next slide">&#8250;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <h2 style="margin-top:24px;">My Repositories</h2>
+        <p class="note">This list is retrieved using a GET request to the GitHub API when the page loads.</p>
+
+        <div id="status" class="note">Loading repositories…</div>
+        <div id="repo-container" class="grid two" style="margin-top: 16px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="modal" onclick="closeImageModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="modal-close" onclick="closeImageModal()">&times;</span>
+      <img id="modalImage" src="" alt="" />
+      <div class="modal-caption">
+        <p id="modalCaption"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        Portfolio for university applications and potential employers.<br>
+        © <span id="year"></span> Yusuf Siddiqui.
+      </p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='repos.js') }}"></script>
+</body>
+</html>
