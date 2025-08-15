@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from flask_caching import Cache
+from waitress import serve
 import os
 import time
 import requests
@@ -156,4 +157,4 @@ def project_images(filename):
 
 
 if __name__ == "__main__":
-    app.run()
+    serve(app, host="0.0.0.0", port=8080)
