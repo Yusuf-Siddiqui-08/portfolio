@@ -807,7 +807,7 @@ html {
 }
 
 .carousel-btn {
-  position: relative;
+  position: absolute; /* was relative */
   top: 50%;
   transform: translateY(-50%);
   background: 
@@ -833,6 +833,7 @@ html {
     0 0 20px rgba(34, 211, 238, 0.15);
   transition: all 0.3s ease, background .2s ease, transform .06s ease;
   overflow: hidden;
+  z-index: 2; /* ensure above images */
 }
 
 .carousel-btn::before {
@@ -1250,7 +1251,7 @@ h2 {
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 25px;
     backdrop-filter: saturate(200%) blur(25px) brightness(1.2);
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.4),
       0 0 0 1px rgba(255, 255, 255, 0.1),
       inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -1272,7 +1273,7 @@ h2 {
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     backdrop-filter: saturate(200%) blur(20px) brightness(1.15);
-    box-shadow: 
+    box-shadow:
       0 4px 16px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
     display: flex;
