@@ -2,3 +2,4 @@ flask
 requests
 flask-caching
 waitress
+psycopg[binary]>=3.1

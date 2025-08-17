@@ -73,6 +73,37 @@
         </div>
       </div>
     </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 style="margin-top:0;">Send a message</h2>
+        <p class="note">This form stores your message securely and helps me get back to you.</p>
+
+        <form id="contact-form" novalidate style="max-width:640px;">
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" required maxlength="120" placeholder="Your name" class="input">
+          </div>
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required maxlength="200" placeholder="you@example.com" class="input">
+          </div>
+          <div class="form-field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" required minlength="5" maxlength="5000" rows="6" placeholder="How can I help?" class="textarea"></textarea>
+          </div>
+          <!-- Honeypot (hidden from users) -->
+          <div class="sr-only" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div id="contact-status" class="note" role="status" aria-live="polite"></div>
+
+          <button id="contact-submit" type="submit" class="btn primary">Send message</button>
+        </form>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -84,6 +115,65 @@
     </div>
   </footer>
 
+  <script>
+    (function() {
+      const form = document.getElementById('contact-form');
+      const submitBtn = document.getElementById('contact-submit');
+      const statusEl = document.getElementById('contact-status');
+      const yearEl = document.getElementById('year');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
+      if (!form) return;
+
+      function setStatus(msg, ok = true) {
+        if (!statusEl) return;
+        statusEl.textContent = msg || '';
+        statusEl.style.color = ok ? 'var(--text-dim)' : '#ffb4b4';
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Sending…';
+        }
+        setStatus('Sending your message…');
+
+        const payload = {
+          name: document.getElementById('name')?.value?.trim() || '',
+          email: document.getElementById('email')?.value?.trim() || '',
+          message: document.getElementById('message')?.value?.trim() || '',
+          // Honeypot
+          website: document.getElementById('website')?.value || ''
+        };
+
+        try {
+          const res = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok || !json.ok) {
+            const msg = (json && json.error === 'validation_error') ? 'Please fill in all fields correctly.' :
+                        (json && json.error === 'rate_limited') ? 'Too many messages from your IP. Please try again later.' :
+                        'Something went wrong. Please try again.';
+            setStatus(msg, false);
+          } else {
+            setStatus('Thanks! Your message has been sent.');
+            form.reset();
+          }
+        } catch (err) {
+          setStatus('Network error. Please try again later.', false);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send message';
+          }
+        }
+        return false;
+      });
+    })();
+  </script>
   <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}" defer></script>
 </body>
 </html>

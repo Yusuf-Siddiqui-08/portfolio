@@ -1,9 +1,18 @@
-from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask import Flask, render_template, jsonify, send_from_directory, request, Response
 from flask_caching import Cache
 from waitress import serve
 import os
 import time
 import requests
+import sqlite3
+from html import escape
+from datetime import datetime, timezone
+
+# Try to import psycopg (PostgreSQL driver); optional for local SQLite
+try:
+    import psycopg  # psycopg3
+except Exception:  # pragma: no cover
+    psycopg = None
 
 app = Flask(__name__)
 
@@ -16,6 +25,91 @@ def inject_asset_version():
 
 # Simple in-memory cache; good enough for small deployments
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
+
+DB_PATH = os.getenv("DB_PATH") or os.path.join(app.root_path, "app.db")
+
+
+def _get_pg_dsn():
+    """Build a PostgreSQL DSN from env vars, preferring DATABASE_URL."""
+    url = os.getenv("DATABASE_URL")
+    if url:
+        return url
+    host = os.getenv("PGHOST")
+    if not host:
+        return None
+    parts = [
+        f"host={host}",
+        f"port={os.getenv('PGPORT', '5432')}",
+        f"dbname={os.getenv('PGDATABASE')}",
+        f"user={os.getenv('PGUSER')}",
+        f"password={os.getenv('PGPASSWORD')}",
+    ]
+    sslmode = os.getenv("PGSSLMODE") or os.getenv("DATABASE_SSLMODE")
+    if sslmode:
+        parts.append(f"sslmode={sslmode}")
+    # Filter missing values like dbname=None
+    return " ".join(p for p in parts if p and not p.endswith("=None"))
+
+
+def _is_postgres() -> bool:
+    return psycopg is not None and _get_pg_dsn() is not None
+
+
+def _get_db():
+    # Use Postgres on Railway (or wherever DATABASE_URL/PG* provided), else SQLite locally
+    if _is_postgres():
+        return psycopg.connect(_get_pg_dsn())
+    # Use check_same_thread=False to be safe under threaded servers; each usage is short-lived
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+
+def _init_db():
+    with _get_db() as conn:
+        # Use a cursor for compatibility across drivers
+        cur = conn.cursor()
+        if _is_postgres():
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS contact_messages (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    created_at BIGINT NOT NULL,
+                    ip TEXT,
+                    ua TEXT
+                )
+                """
+            )
+        else:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS contact_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    email TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    ip TEXT,
+                    ua TEXT
+                )
+                """
+            )
+        try:
+            conn.commit()
+        except Exception:
+            pass
+
+_init_db()
+
+# Log which DB is being used (avoid printing secrets)
+try:
+    if _is_postgres():
+        print("[startup] Using PostgreSQL (DATABASE_URL detected)")
+    else:
+        print(f"[startup] Using SQLite at {DB_PATH}")
+except Exception:
+    pass
 
 
 def _fetch_github_repos(username: str):
@@ -32,7 +126,7 @@ def _fetch_github_repos(username: str):
     params = {"sort": "updated", "per_page": 20}
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "PortfolioApp/1.0 (+https://example.com)",
+        "User-Agent": "PortfolioApp/1.0 (+https://yusufsiddiqui.dev)",
     }
 
     max_attempts = 3
@@ -150,11 +244,170 @@ def api_github_repos():
     return jsonify({"ok": True, "username": username, "repos": data})
 
 
+@app.post("/api/contact")
+def api_contact():
+    data = request.get_json(silent=True) or request.form
+
+    # Honeypot field (bots often fill this); ignore silently
+    if (data.get("website") or "").strip():
+        return jsonify({"ok": True}), 200
+
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    message = (data.get("message") or "").strip()
+
+    if not name or "@" not in email or len(message) < 5:
+        return jsonify({"ok": False, "error": "validation_error"}), 400
+
+    # Simple IP rate limit: 5 submissions per hour
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
+    rl_key = f"rl:contact:{ip}"
+    count = cache.get(rl_key) or 0
+    if count >= 5:
+        return jsonify({"ok": False, "error": "rate_limited"}), 429
+    cache.set(rl_key, count + 1, timeout=3600)
+
+    ts = int(time.time())
+    ua = request.headers.get("User-Agent", "")
+    with _get_db() as conn:
+        if _is_postgres():
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO contact_messages (name, email, message, created_at, ip, ua)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (name, email, message, ts, ip, ua),
+            )
+            row = cur.fetchone()
+            msg_id = row[0] if row else None
+            try:
+                conn.commit()
+            except Exception:
+                pass
+        else:
+            cur = conn.execute(
+                "INSERT INTO contact_messages (name, email, message, created_at, ip, ua) VALUES (?, ?, ?, ?, ?, ?)",
+                (name, email, message, ts, ip, ua),
+            )
+            msg_id = cur.lastrowid
+
+    return jsonify({"ok": True, "id": msg_id}), 201
+
+
+@app.get("/api/search")
+def api_search():
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"ok": True, "results": []})
+
+    username = request.args.get("username") or os.getenv("GITHUB_USERNAME", "Yusuf-Siddiqui-08")
+    data, error = _fetch_github_repos(username)
+    if error:
+        return jsonify({"ok": False, "error": error.get("type"), "message": error.get("message")}), 502
+
+    ql = q.lower()
+    results = []
+    for r in data:
+        text = " ".join([
+            r.get("name") or "",
+            r.get("description") or "",
+            r.get("language") or "",
+            " ".join(r.get("topics") or []),
+        ]).lower()
+        if ql in text:
+            results.append({
+                "name": r.get("name"),
+                "html_url": r.get("html_url"),
+                "description": r.get("description"),
+                "language": r.get("language"),
+                "stars": r.get("stargazers_count", 0),
+                "updated_at": r.get("pushed_at") or r.get("updated_at"),
+            })
+
+    results.sort(key=lambda x: (x["stars"], x["updated_at"] or ""), reverse=True)
+    return jsonify({"ok": True, "count": len(results), "results": results[:10]})
+
+
+def _to_rfc2822(iso_ts: str) -> str:
+    try:
+        dt = datetime.fromisoformat((iso_ts or "").replace("Z", "+00:00"))
+    except Exception:
+        dt = datetime.now(timezone.utc)
+    return dt.strftime("%a, %d %b %Y %H:%M:%S %z")
+
+
+@app.get("/feed.xml")
+def feed_xml():
+    username = os.getenv("GITHUB_USERNAME", "Yusuf-Siddiqui-08")
+    data, error = _fetch_github_repos(username)
+    if error:
+        return Response("Service Unavailable", status=503, mimetype="text/plain")
+
+    # Top 10 by last update
+    repos = sorted(
+        data,
+        key=lambda r: r.get("pushed_at") or r.get("updated_at") or "",
+        reverse=True
+    )[:10]
+
+    site_title = f"{username}'s updates"
+    site_link = request.url_root.rstrip("/")
+    items = []
+    for r in repos:
+        title = escape(r.get("name") or "Repository")
+        link = escape(r.get("html_url") or site_link)
+        desc = escape(r.get("description") or "")
+        pub_date = _to_rfc2822(r.get("pushed_at") or r.get("updated_at") or "")
+        items.append(f"""
+            <item>
+                <title>{title}</title>
+                <link>{link}</link>
+                <guid isPermaLink=\"true\">{link}</guid>
+                <pubDate>{pub_date}</pubDate>
+                <description>{desc}</description>
+            </item>
+        """.strip())
+
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>{escape(site_title)}</title>
+<link>{site_link}</link>
+<description>Latest updated repositories</description>
+{''.join(items)}
+</channel>
+</rss>"""
+    resp = Response(xml, mimetype="application/rss+xml")
+    # Cache feed in clients/CDN for 5 minutes
+    resp.headers["Cache-Control"] = "public, max-age=300"
+    return resp
+
+
 @app.route("/project_images/<path:filename>")
 def project_images(filename):
     directory = os.path.join(app.root_path, "project_images")
     return send_from_directory(directory, filename)
 
 
+@app.get("/api/health")
+def api_health():
+    try:
+        with _get_db() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT 1")
+            one = cur.fetchone()
+        return jsonify({
+            "ok": True,
+            "db": "postgres" if _is_postgres() else "sqlite",
+            "select1": one[0] if one else None,
+        }), 200
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=8080)
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8080"))
+    serve(app, host=host, port=port)

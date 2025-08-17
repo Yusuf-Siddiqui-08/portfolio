@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize button ripple/splash tracking
   initButtonRipples();
 
+  // Wire up search
+  initRepoSearch();
+
+  // Initial load
   fetchRepos();
 });
 
@@ -49,13 +53,24 @@ function initButtonRipples() {
   buttons.forEach((btn) => {
     if (btn.dataset.rippleInit === '1') return;
     btn.dataset.rippleInit = '1';
+    
+    // Create ripple element for liquid glass effect
+    if (!btn.querySelector('.ripple')) {
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      btn.appendChild(ripple);
+    }
+    
     // Wrap inner HTML to keep content above the ripple
     if (!btn.querySelector('.btn-content')) {
       const span = document.createElement('span');
       span.className = 'btn-content';
-      while (btn.firstChild) span.appendChild(btn.firstChild);
+      while (btn.firstChild && btn.firstChild !== btn.querySelector('.ripple')) {
+        span.appendChild(btn.firstChild);
+      }
       btn.appendChild(span);
     }
+    
     btn.addEventListener('mousemove', (e) => {
       const rect = btn.getBoundingClientRect();
       // Compute a scale large enough to cover button diagonal
@@ -131,83 +146,124 @@ window.closeImageModal = closeImageModal;
 async function fetchRepos() {
   const statusEl = document.getElementById('status');
   const container = document.getElementById('repo-container');
-
   if (!statusEl || !container) return;
 
   try {
-    const response = await fetch('https://api.github.com/users/Yusuf-Siddiqui-08/repos?sort=updated&per_page=100');
-    if (!response.ok) {
-      throw new Error('GitHub API request failed with status ' + response.status);
-    }
-    const repos = await response.json();
-
-    if (!Array.isArray(repos) || repos.length === 0) {
-      statusEl.textContent = 'No repositories found.';
-      return;
-    }
+    statusEl.textContent = 'Loading repositories…';
+    const response = await fetch('/api/github/repos');
+    if (!response.ok) throw new Error('Request failed: ' + response.status);
+    const json = await response.json();
+    if (!json.ok || !Array.isArray(json.repos)) throw new Error(json.message || 'Invalid response');
 
     statusEl.textContent = '';
-
-    // Render repositories
-    const fragment = document.createDocumentFragment();
-    repos.forEach(repo => {
-      const card = document.createElement('article');
-      card.style.border = '1px solid rgba(255,255,255,.08)';
-      card.style.borderRadius = '12px';
-      card.style.padding = '16px';
-      card.style.background = 'rgba(255,255,255,.03)';
-
-      // Single prominent button containing the repo name with GitHub icon
-      const link = document.createElement('a');
-      link.href = repo.html_url;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      link.className = 'btn repo-button';
-      link.innerHTML = `
-        <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
-          </svg>
-          <span>${repo.name}</span>
-        </span>
-      `;
-
-      const desc = document.createElement('p');
-      desc.className = 'note';
-      desc.style.margin = '10px 0 12px 0';
-      desc.textContent = repo.description || 'No description provided.';
-
-      const meta = document.createElement('div');
-      meta.style.display = 'flex';
-      meta.style.flexWrap = 'wrap';
-      meta.style.gap = '10px';
-      meta.style.fontSize = '14px';
-      meta.style.color = 'var(--text-dim)';
-
-      const pieces = [];
-
-      if (repo.language) pieces.push('Language: ' + repo.language);
-      pieces.push('Stars: ' + (repo.stargazers_count || 0));
-      pieces.push('Forks: ' + (repo.forks_count || 0));
-      if (repo.updated_at) {
-        const d = new Date(repo.updated_at);
-        pieces.push('Updated: ' + d.toLocaleDateString());
-      }
-
-      meta.textContent = pieces.join(' • ');
-
-      card.appendChild(link);
-      card.appendChild(desc);
-      card.appendChild(meta);
-
-      fragment.appendChild(card);
-    });
-
-    container.appendChild(fragment);
-    // Initialize ripple behavior for newly added repo buttons
-    initButtonRipples();
+    renderRepos(json.repos, container);
   } catch (err) {
     console.error(err);
     statusEl.textContent = 'Failed to load repositories. Please try again later.';
+  }
+}
+
+async function fetchSearch(q) {
+  const statusEl = document.getElementById('status');
+  const container = document.getElementById('repo-container');
+  if (!statusEl || !container) return;
+
+  try {
+    if (!q) { fetchRepos(); return; }
+    statusEl.textContent = 'Searching…';
+    const response = await fetch('/api/search?q=' + encodeURIComponent(q));
+    if (!response.ok) throw new Error('Search failed: ' + response.status);
+    const json = await response.json();
+    if (!json.ok || !Array.isArray(json.results)) throw new Error(json.message || 'Invalid response');
+
+    statusEl.textContent = json.count === 0 ? 'No results.' : '';
+    renderRepos(json.results, container);
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Search failed. Please try again later.';
+  }
+}
+
+function renderRepos(repos, container) {
+  container.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  repos.forEach(repo => {
+    const name = repo.name;
+    const url = repo.html_url;
+    const description = repo.description || 'No description provided.';
+    const language = repo.language || '';
+    const stars = repo.stargazers_count ?? repo.stars ?? 0;
+    const forks = repo.forks_count ?? repo.forks ?? 0;
+    const updatedAt = repo.updated_at || repo.pushed_at || '';
+
+    const card = document.createElement('article');
+    card.className = 'repo-card';
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.className = 'btn repo-button';
+    link.innerHTML = `
+      <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
+        </svg>
+        <span>${name}</span>
+      </span>
+    `;
+
+    const desc = document.createElement('p');
+    desc.className = 'note';
+    desc.style.margin = '10px 0 12px 0';
+    desc.textContent = description;
+
+    const meta = document.createElement('div');
+    meta.style.display = 'flex';
+    meta.style.flexWrap = 'wrap';
+    meta.style.gap = '10px';
+    meta.style.fontSize = '14px';
+    meta.style.color = 'var(--text-dim)';
+
+    const pieces = [];
+    if (language) pieces.push('Language: ' + language);
+    pieces.push('Stars: ' + stars);
+    if (forks) pieces.push('Forks: ' + forks);
+    if (updatedAt) {
+      const d = new Date(updatedAt);
+      if (!isNaN(d)) pieces.push('Updated: ' + d.toLocaleDateString());
+    }
+    meta.textContent = pieces.join(' • ');
+
+    card.appendChild(link);
+    card.appendChild(desc);
+    card.appendChild(meta);
+    fragment.appendChild(card);
+  });
+
+  container.appendChild(fragment);
+  // Initialize ripple behavior for newly added repo buttons
+  initButtonRipples();
+}
+
+function initRepoSearch() {
+  const input = document.getElementById('repo-search');
+  if (!input) return;
+
+  const debounced = debounce((val) => {
+    fetchSearch(val.trim());
+  }, 300);
+
+  input.addEventListener('input', (e) => {
+    debounced(e.target.value || '');
+  });
+}
+
+function debounce(fn, wait) {
+  let t = null;
+  return function debounced(...args) {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
   }
 }

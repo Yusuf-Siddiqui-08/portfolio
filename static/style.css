@@ -26,7 +26,7 @@
   /* Overlay variations using black with opacity */
   --overlay-light: color-mix(in srgb, var(--black-hex) 30%, transparent);
   --overlay-medium: color-mix(in srgb, var(--black-hex) 35%, transparent);
-  --overlay-heavy: color-mix(in srgb, var(--black-hex) 55%, transparent);
+  --overlay-heavy: color-mix(in srgb, var(--black-hex) 50%, transparent);
   --overlay-dark: color-mix(in srgb, var(--black-hex) 70%, transparent);
   --overlay-darker: color-mix(in srgb, var(--black-hex) 90%, transparent);
 
@@ -58,12 +58,20 @@ html, body {
   padding: 0;
   margin: 0;
   scroll-behavior: smooth;
-  background: radial-gradient(1200px 600px at 20% -10%, var(--gradient-accent), transparent 60%),
-              radial-gradient(1200px 600px at 80% 110%, var(--gradient-primary), transparent 60%),
-              var(--bg);
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(34, 211, 238, 0.15), transparent 60%),
+              radial-gradient(1200px 600px at 80% 110%, rgba(99, 102, 241, 0.12), transparent 60%),
+              #0a0516;
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   line-height: 1.6;
+}
+
+/* Ensure consistent background across all pages */
+html {
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(34, 211, 238, 0.15), transparent 60%),
+              radial-gradient(1200px 600px at 80% 110%, rgba(99, 102, 241, 0.12), transparent 60%),
+              #0a0516;
+  min-height: 100vh;
 }
 
 .container {
@@ -75,24 +83,189 @@ html, body {
 
 .site-header {
   position: sticky;
-  top: 0;
-  backdrop-filter: saturate(150%) blur(8px);
-  background: var(--bg-blur);
-  border-bottom: 1px solid var(--white-06);
+  top: 20px;
+  backdrop-filter: saturate(180%) blur(32px) brightness(1.15) contrast(1.1);
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 30px;
+  margin: 0 20px;
+  padding: 20px 0;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(34, 211, 238, 0.15);
   z-index: 10;
+  overflow: hidden;
 }
+
+.site-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion - much more natural */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.15) 20%,
+      rgba(27, 16, 58, 0.25) 40%,
+      rgba(27, 16, 58, 0.15) 60%,
+      rgba(27, 16, 58, 0.25) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+  border-radius: 30px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.site-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion - barely visible */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.08) 30%,
+      rgba(27, 16, 58, 0.12) 50%,
+      rgba(27, 16, 58, 0.08) 70%,
+      transparent 100%
+    ),
+    /* Noise texture for the fuzzy, hairy edge effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 30px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(0.8px);
+}
+
+.site-header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Removed the horizontal line that was creating weird effects */
 
 .brand {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 0;
+  padding: 6px 0;
 }
 
 .logo {
   width: 40px;
   height: 40px;
   display: block;
+}
+
+.logo-link {
+  position: relative;
+  display: block;
+}
+
+.logo-link::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  right: -16px;
+  bottom: -16px;
+  background: 
+    radial-gradient(circle, 
+      rgba(34, 211, 238, 0.8) 0%, 
+      rgba(34, 211, 238, 0.4) 30%, 
+      rgba(99, 102, 241, 0.2) 60%, 
+      transparent 80%
+    );
+  border-radius: 50%;
+  opacity: 0.9;
+  z-index: -1;
+  filter: blur(16px);
+  animation: liquid-glow 4s ease-in-out infinite alternate;
+}
+
+.logo-link::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  background: 
+    radial-gradient(circle, 
+      rgba(255, 255, 255, 0.3) 0%, 
+      transparent 70%
+    );
+  border-radius: 50%;
+  opacity: 0.6;
+  z-index: -1;
+  filter: blur(8px);
+  animation: liquid-glow 4s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes liquid-glow {
+  0% {
+    opacity: 0.7;
+    transform: scale(1) rotate(0deg);
+    filter: blur(16px) brightness(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02) rotate(1deg);
+    filter: blur(18px) brightness(1.1);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.05) rotate(-1deg);
+    filter: blur(20px) brightness(0.95);
+  }
+}
+
+@keyframes liquid-flow {
+  0% {
+    opacity: 0.3;
+    transform: translateY(-50%) scaleX(1);
+    filter: blur(1px) brightness(1);
+  }
+  25% {
+    opacity: 0.6;
+    transform: translateY(-50%) scaleX(1.1);
+    filter: blur(1.5px) brightness(1.2);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50%) scaleX(0.9);
+    filter: blur(0.8px) brightness(0.9);
+  }
+  75% {
+    opacity: 0.5;
+    transform: translateY(-50%) scaleX(1.05);
+    filter: blur(1.2px) brightness(1.1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: translateY(-50%) scaleX(1);
+    filter: blur(1px) brightness(1);
+  }
 }
 
 .brand-text .site-title {
@@ -112,98 +285,172 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .btn {
+  position: relative;
   display: inline-block;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid var(--white-14);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text);
   text-decoration: none;
-  background: var(--white-04);
-  transition: transform .06s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, filter .2s ease;
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  backdrop-filter: saturate(180%) blur(25px) brightness(1.15) contrast(1.1);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease, transform .06s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, filter .2s ease;
   will-change: transform;
-  position: relative;
   overflow: hidden;
   z-index: 0; /* create stacking context for ripple below content */
 }
 
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.15) 20%,
+      rgba(27, 16, 58, 0.25) 40%,
+      rgba(27, 16, 58, 0.15) 60%,
+      rgba(27, 16, 58, 0.25) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: -2;
+  filter: blur(0.5px);
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.08) 30%,
+      rgba(27, 16, 58, 0.12) 50%,
+      rgba(27, 16, 58, 0.08) 70%,
+      transparent 100%
+    ),
+    /* Noise texture for the fuzzy, hairy edge effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(0.8px);
+}
+
 .btn:hover {
   transform: translateY(-1px);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
-.btn.primary {
-  background: var(--white-04);
-  border: 1px solid var(--white-14);
-  color: var(--text);
-}
-
-.btn.primary:hover {
-  background: linear-gradient(135deg, var(--primary), var(--primary-600));
-  border-color: transparent;
-  color: var(--white);
-  filter: none;
-}
-
-/* Ripple/splash hover effect driven by --mouse-x/--mouse-y set via JS */
-.btn::before {
-  content: "";
+/* Mouse-follow ripple positioning and animation */
+.btn .ripple {
   position: absolute;
-  left: var(--mouse-x, 50%);
-  top: var(--mouse-y, 50%);
-  transform: translate(-50%, -50%) scale(0);
+  top: 0;
+  left: 0;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle at center, var(--accent) 0%, var(--primary) 60%, var(--primary-600) 100%);
-  transition: transform .45s ease, opacity .45s ease;
-  opacity: .85;
-  z-index: 0; /* sit beneath the button content */
+  border-radius: 999px;
+  /* start hidden off-button */
+  transform: translate(calc(var(--mouse-x, -100px) - 8px), calc(var(--mouse-y, -100px) - 8px)) scale(0);
+  transition: transform .22s ease, opacity .45s ease;
+  filter: blur(10px);
+  opacity: 0;
+  mix-blend-mode: screen;
 }
 
-/* Make the splash larger so it fills the button */
-.btn:hover::before,
-.btn:focus-visible::before {
-  transform: translate(-50%, -50%) scale(var(--r-scale, 30));
+.btn.rippling .ripple {
+  /* expand and show at the mouse position */
+  transform: translate(calc(var(--mouse-x, -100px) - 8px), calc(var(--mouse-y, -100px) - 8px)) scale(var(--r-scale, 10));
+  opacity: .6; /* was .35; stronger glow */
 }
 
-/* Keep ripple active even after unhover until it fades out */
-.btn.rippling::before {
-  transform: translate(-50%, -50%) scale(var(--r-scale, 30));
-}
-
-/* Fade ripple out without shrinking to center */
-.btn.rippling-out::before {
+.btn.rippling-out .ripple {
+  /* fade away after mouse leaves */
   opacity: 0;
 }
 
-/* For grey/default buttons, let the splash visually fill while preserving text contrast */
-.btn:not(.primary) {
-  isolation: isolate;
-}
-.btn:not(.primary)::before {
-  mix-blend-mode: normal;
-  background: radial-gradient(circle at center, var(--accent) 0%, var(--primary) 60%, var(--primary-600) 100%);
-}
-
-/* For primary buttons, keep existing gradient and show a subtle glow splash */
-.btn.primary::before {
-  background: radial-gradient(circle at center, color-mix(in srgb, var(--white) 40%, transparent) 0%, color-mix(in srgb, var(--white) 10%, transparent) 70%);
-  opacity: .25;
+/* Faint blue ripple that tracks mouse; no purple */
+.btn .ripple,
+.btn.primary .ripple {
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--accent) 85%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 50%, transparent) 55%,
+    transparent 100%
+  );
+  opacity: .6; /* was .35; stronger base intensity */
 }
 
-/* Ensure text/icons render above the ripple */
-.btn .btn-content,
-.btn svg {
-  position: relative;
-  z-index: 1;
+/* Remove purple fill on primary hover */
+.btn.primary:hover {
+  background:
+    linear-gradient(135deg,
+      rgba(27, 16, 58, 0.5) 0%,
+      rgba(34, 211, 238, 0.2) 50%,
+      rgba(27, 16, 58, 0.4) 100%
+    );
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  filter: none;
 }
 
-/* Removed legacy reverse-fill rules */
-
-/* Grey reverse-fill removed */
+/* Repo button: remove static glow and purple hover */
+.repo-button {
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+.repo-button:hover {
+  background:
+    linear-gradient(135deg,
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
 
 .hero {
   padding: 64px 0;
@@ -269,32 +516,99 @@ html, body {
 
 /* Larger, prominent repo button with theme hover */
 .repo-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
   font-weight: 600;
   border-radius: 12px;
-  background: var(--white-06);
-  border: 1px solid var(--white-14);
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text);
   text-decoration: none;
-  transition: transform .06s ease, background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
-  position: relative;
+  backdrop-filter: saturate(180%) blur(25px) brightness(1.15) contrast(1.1);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease, transform .06s ease, background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
   overflow: hidden;
 }
 
-.repo-button:hover {
-  background: linear-gradient(135deg, var(--primary), var(--primary-600));
-  border-color: transparent;
-  color: var(--white);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px var(--shadow-primary);
+.repo-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.15) 20%,
+      rgba(27, 16, 58, 0.25) 40%,
+      rgba(27, 16, 58, 0.15) 60%,
+      rgba(27, 16, 58, 0.25) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
 }
 
-/* Ensure repo-button text/icons always render above ripple */
-.repo-button .btn-content,
-.repo-button svg { position: relative; z-index: 1; }
+.repo-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.08) 30%,
+      rgba(27, 16, 58, 0.12) 50%,
+      rgba(27, 16, 58, 0.08) 70%,
+      transparent 100%
+    ),
+    /* Noise texture for the fuzzy, hairy edge effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(0.8px);
+}
+
+.repo-button:hover {
+  background:
+    linear-gradient(135deg,
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
 
 /** Spotlight carousels **/
 .spotlight-grid {
@@ -311,10 +625,92 @@ html, body {
 }
 
 .project-card {
-  border: 1px solid var(--white-08);
-  border-radius: 12px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
   padding: 16px;
-  background: var(--white-03);
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  backdrop-filter: saturate(180%) blur(32px) brightness(1.15) contrast(1.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(34, 211, 238, 0.15);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion - much more natural */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.15) 20%,
+      rgba(27, 16, 58, 0.25) 40%,
+      rgba(27, 16, 58, 0.15) 60%,
+      rgba(27, 16, 58, 0.25) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.project-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion - barely visible */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.08) 30%,
+      rgba(27, 16, 58, 0.12) 50%,
+      rgba(27, 16, 58, 0.08) 70%,
+      transparent 100%
+    ),
+    /* Noise texture for the fuzzy, hairy edge effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(0.8px);
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 50px rgba(34, 211, 238, 0.2);
+}
+
+/* Ensure project card content is above the pseudo-elements */
+.project-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .carousel {
@@ -323,12 +719,55 @@ html, body {
 }
 
 .carousel-viewport {
+  position: relative;
   overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--white-08);
-  background: var(--white-02);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.25) 0%,
+      rgba(34, 211, 238, 0.08) 50%,
+      rgba(27, 16, 58, 0.2) 100%
+    );
+  backdrop-filter: saturate(180%) blur(20px) brightness(1.05) contrast(1.02);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   aspect-ratio: 1.9/1; /* Made slightly taller - was 2.5:1 */
   width: 100%;
+  transition: all 0.3s ease;
+}
+
+.carousel-viewport::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.04) 30%,
+      rgba(27, 16, 58, 0.06) 50%,
+      rgba(27, 16, 58, 0.04) 70%,
+      transparent 100%
+    );
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(1px);
+  opacity: 0.2;
+}
+
+.carousel-viewport:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .carousel-track {
@@ -368,31 +807,143 @@ html, body {
 }
 
 .carousel-btn {
-  position: absolute;
+  position: relative;
   top: 50%;
   transform: translateY(-50%);
-  background: var(--overlay-medium);
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.6) 0%,
+      rgba(34, 211, 238, 0.2) 50%,
+      rgba(27, 16, 58, 0.5) 100%
+    );
   color: var(--white);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   width: 36px;
   height: 36px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: background .2s ease, transform .06s ease;
+  backdrop-filter: saturate(180%) blur(20px) brightness(1.1) contrast(1.05);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(34, 211, 238, 0.15);
+  transition: all 0.3s ease, background .2s ease, transform .06s ease;
+  overflow: hidden;
 }
+
+.carousel-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.2) 20%,
+      rgba(27, 16, 58, 0.3) 40%,
+      rgba(27, 16, 58, 0.2) 60%,
+      rgba(27, 16, 58, 0.3) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.carousel-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.1) 30%,
+      rgba(27, 16, 58, 0.15) 50%,
+      rgba(27, 16, 58, 0.1) 70%,
+      transparent 100%
+    ),
+    /* Noise texture for the fuzzy, hairy edge effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(0.8px);
+}
+
 .carousel-btn:hover {
-  background: var(--overlay-heavy);
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.7) 0%,
+      rgba(34, 211, 238, 0.3) 50%,
+      rgba(27, 16, 58, 0.6) 100%
+    );
   transform: translateY(-50%) scale(1.05);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 30px rgba(34, 211, 238, 0.2);
 }
+
+/* Ensure carousel button content is above the pseudo-elements */
+.carousel-btn > * {
+  position: relative;
+  z-index: 1;
+}
+
 .carousel-btn.prev { left: 8px; }
 .carousel-btn.next { right: 8px; }
 
 /* Larger, dedicated carousel sections */
 .carousel-section {
+  position: relative;
   padding: 48px 0;
+  overflow: hidden;
 }
+
+.carousel-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.08) 20%,
+      rgba(27, 16, 58, 0.12) 40%,
+      rgba(27, 16, 58, 0.08) 60%,
+      rgba(27, 16, 58, 0.12) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.8px);
+  opacity: 0.6;
+}
+
 .carousel-section .container {
   max-width: 1280px;
 }
@@ -413,10 +964,68 @@ html, body {
 
 /* Spotlight split layout and typography */
 .spotlight-split {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
   align-items: start; /* Changed back to start for fixed sizing */
+  padding: 24px;
+  border-radius: 20px;
+  background: 
+    linear-gradient(135deg, 
+      rgba(27, 16, 58, 0.3) 0%,
+      rgba(34, 211, 238, 0.1) 50%,
+      rgba(27, 16, 58, 0.25) 100%
+    );
+  backdrop-filter: saturate(180%) blur(25px) brightness(1.15) contrast(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(34, 211, 238, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.spotlight-split::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.06) 30%,
+      rgba(27, 16, 58, 0.08) 50%,
+      rgba(27, 16, 58, 0.06) 70%,
+      transparent 100%
+    );
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(1px);
+  opacity: 0.3;
+}
+
+.spotlight-split:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(34, 211, 238, 0.15);
+}
+
+/* Ensure spotlight-split content is above the pseudo-elements */
+.spotlight-split > * {
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 860px) {
@@ -542,6 +1151,40 @@ html, body {
   backdrop-filter: blur(10px);
 }
 
+/* Utility: screen-reader only */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Form styles */
+.form-field { margin: 0 0 14px 0; }
+.form-field label { display: block; margin: 0 0 6px 0; font-size: 14px; color: var(--text-dim); }
+.input, .textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.input:focus, .textarea:focus {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+.textarea { resize: vertical; }
+
+/* Repo search input alignment */
+.repo-search-wrap input[type="search"] {
+  font-size: 15px;
+}
+
 /* Base styles */
 * {
     margin: 0;
@@ -565,78 +1208,9 @@ body {
     padding: 0 20px;
 }
 
-/* Header styles */
-.site-header {
-    padding: 20px 0;
-    border-bottom: 1px solid var(--white-06);
-}
+/* Header styles - consolidated with main site-header rule above */
 
-.site-header .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--accent);
-    font-family: 'Courier New', monospace;
-}
-
-.brand-text h1 {
-    font-size: 24px;
-    font-weight: 600;
-    margin: 0;
-}
-
-.brand-text p {
-    font-size: 14px;
-    color: #a1a1aa;
-    margin: 0;
-}
-
-.actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: 1px solid var(--white-14);
-    color: var(--text);
-    background: var(--white-04);
-}
-
-.btn:hover {
-    background: var(--white-08);
-    border-color: var(--white-14);
-}
-
-.btn.primary {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--white);
-}
-
-.btn.primary:hover {
-    background: var(--primary-600);
-    border-color: var(--primary-600);
-}
+/* Brand and button styles consolidated with main rules above */
 
 /* Main content */
 main {
@@ -672,9 +1246,15 @@ h2 {
     align-items: center;
     gap: 16px;
     padding: 24px;
-    background: var(--white-04);
-    border: 1px solid var(--white-08);
-    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-blur) 60%, rgba(255, 255, 255, 0.15));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    backdrop-filter: saturate(200%) blur(25px) brightness(1.2);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
@@ -688,8 +1268,13 @@ h2 {
     flex-shrink: 0;
     width: 64px;
     height: 64px;
-    background: var(--white-06);
-    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-blur) 70%, rgba(255, 255, 255, 0.2));
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: saturate(200%) blur(20px) brightness(1.15);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -719,20 +1304,103 @@ h2 {
 }
 
 .contact-link {
+    position: relative;
     display: inline-block;
     padding: 6px 12px;
-    background: var(--primary);
+    background: 
+      linear-gradient(135deg, 
+        rgba(27, 16, 58, 0.5) 0%,
+        rgba(34, 211, 238, 0.2) 50%,
+        rgba(27, 16, 58, 0.4) 100%
+      );
     color: var(--white);
     text-decoration: none;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
-    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: saturate(180%) blur(20px) brightness(1.1) contrast(1.05);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+      0 0 20px rgba(34, 211, 238, 0.15);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.contact-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.2) 20%,
+      rgba(27, 16, 58, 0.3) 40%,
+      rgba(27, 16, 58, 0.2) 60%,
+      rgba(27, 16, 58, 0.3) 80%,
+      transparent 100%
+    ),
+    /* Subtle light positioning */
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.contact-link::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    /* Very subtle liquid distortion */
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.1) 30%,
+      rgba(27, 16, 58, 0.15) 50%,
+      rgba(27, 16, 58, 0.1) 70%,
+      transparent 100%
+    ),
+    /* Noise texture for the fuzzy, hairy edge effect */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(0.8px);
 }
 
 .contact-link:hover {
-    background: var(--primary-600);
+    background: 
+      linear-gradient(135deg, 
+        rgba(27, 16, 58, 0.6) 0%,
+        rgba(34, 211, 238, 0.3) 50%,
+        rgba(27, 16, 58, 0.5) 100%
+      );
     transform: translateY(-1px);
+    box-shadow: 
+      0 6px 20px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+      0 0 30px rgba(34, 211, 238, 0.2);
+}
+
+/* Ensure contact-link content is above the pseudo-elements */
+.contact-link > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Footer */
@@ -749,6 +1417,13 @@ h2 {
     .site-header .container {
         flex-direction: column;
         align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .contact-grid {
@@ -795,4 +1470,115 @@ h2 {
 
 .contact-buttons .btn .btn-content {
     padding: 2px 0; /* slight extra interior breathing room */
+}
+
+/* General glass card styling for consistent effects across the site */
+.glass-card {
+    background: color-mix(in srgb, var(--bg-blur) 70%, rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: saturate(180%) blur(20px) brightness(1.1);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Repository card liquid glass effect - matching the header style */
+.repo-card {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    background: 
+        linear-gradient(135deg, 
+            rgba(27, 16, 58, 0.4) 0%,
+            rgba(34, 211, 238, 0.15) 50%,
+            rgba(27, 16, 58, 0.3) 100%
+        );
+    backdrop-filter: saturate(180%) blur(32px) brightness(1.15) contrast(1.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+        0 0 40px rgba(34, 211, 238, 0.15);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.repo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        /* Subtle liquid distortion - much more natural */
+        linear-gradient(90deg,
+            transparent 0%,
+            rgba(27, 16, 58, 0.15) 20%,
+            rgba(27, 16, 58, 0.25) 40%,
+            rgba(27, 16, 58, 0.15) 60%,
+            rgba(27, 16, 58, 0.25) 80%,
+            transparent 100%
+        ),
+        /* Subtle light positioning */
+        radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: -1;
+    filter: blur(0.5px);
+}
+
+.repo-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        /* Very subtle liquid distortion - barely visible */
+        linear-gradient(90deg,
+            transparent 0%,
+            rgba(27, 16, 58, 0.08) 30%,
+            rgba(27, 16, 58, 0.12) 50%,
+            rgba(27, 16, 58, 0.08) 70%,
+            transparent 100%
+        ),
+        /* Noise texture for the fuzzy, hairy edge effect */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.4;
+    filter: blur(0.8px);
+}
+
+.repo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+        0 0 50px rgba(34, 211, 238, 0.2);
+}
+
+/* Ensure repository card content is above the pseudo-elements */
+.repo-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Glass effect for muted sections */
+.section.muted {
+    background: color-mix(in srgb, var(--muted) 80%, rgba(255, 255, 255, 0.05));
+    backdrop-filter: saturate(180%) blur(15px) brightness(1.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    margin: 0 20px;
 }
