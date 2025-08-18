@@ -50,6 +50,10 @@
   /* Other properties */
   --radius: 14px;
   --shadow: 0 10px 30px var(--shadow-base);
+  /* Defaults for ripple tracking CSS variables (overridden per .btn by JS) */
+  --mouse-x: -100px;
+  --mouse-y: -100px;
+  --r-scale: 1;
 }
 
 * { box-sizing: border-box; }
@@ -73,6 +77,41 @@ html {
               #0a0516;
   min-height: 100vh;
 }
+
+/* Utility classes extracted from inline styles in templates */
+.mt-0 { margin-top: 0 !important; }
+.mt-8 { margin-top: 8px !important; }
+.mt-10 { margin-top: 10px !important; }
+.mt-16 { margin-top: 16px !important; }
+.mt-24 { margin-top: 24px !important; }
+.mb-16 { margin-bottom: 16px !important; }
+
+.icon-inline { display: inline-flex; align-items: center; gap: 8px; }
+
+.panel-simple {
+  margin-top: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 16px;
+  background: rgba(255,255,255,.03);
+}
+
+.stack-v-12 { display: flex; flex-direction: column; gap: 12px; }
+
+.max-w-640 { max-width: 640px; }
+
+.repo-search-input {
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  outline: none;
+}
+
+.cover-pointer { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
 
 .container {
   width: 100%;
@@ -629,82 +668,55 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 16px;
-  background: 
-    linear-gradient(135deg, 
-      rgba(27, 16, 58, 0.4) 0%,
-      rgba(34, 211, 238, 0.15) 50%,
-      rgba(27, 16, 58, 0.3) 100%
+  background:
+    linear-gradient(135deg,
+      rgba(14, 34, 96, 0.32) 0%,
+      rgba(14, 34, 96, 0.20) 50%,
+      rgba(14, 34, 96, 0.28) 100%
     );
-  backdrop-filter: saturate(180%) blur(32px) brightness(1.15) contrast(1.1);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
+  backdrop-filter: saturate(180%) blur(25px) brightness(1.15) contrast(1.05); /* match spotlight-split */
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    0 0 40px rgba(34, 211, 238, 0.15);
-  overflow: hidden;
-  transition: all 0.3s ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(99, 102, 241, 0.12); /* blue glow */
 }
 
 .project-card::before {
+  /* Match spotlight overlay but tinted deep blue */
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    /* Subtle liquid distortion - much more natural */
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
     linear-gradient(90deg,
       transparent 0%,
-      rgba(27, 16, 58, 0.15) 20%,
-      rgba(27, 16, 58, 0.25) 40%,
-      rgba(27, 16, 58, 0.15) 60%,
-      rgba(27, 16, 58, 0.25) 80%,
+      rgba(14, 34, 96, 0.06) 30%,
+      rgba(14, 34, 96, 0.08) 50%,
+      rgba(14, 34, 96, 0.06) 70%,
       transparent 100%
-    ),
-    /* Subtle light positioning */
-    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+    );
   border-radius: 20px;
   pointer-events: none;
   z-index: -1;
-  filter: blur(0.5px);
+  filter: blur(1px);
+  opacity: 0.3;
 }
 
+/* Remove extra noise overlay to match spotlight-split exactly */
 .project-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    /* Very subtle liquid distortion - barely visible */
-    linear-gradient(90deg,
-      transparent 0%,
-      rgba(27, 16, 58, 0.08) 30%,
-      rgba(27, 16, 58, 0.12) 50%,
-      rgba(27, 16, 58, 0.08) 70%,
-      transparent 100%
-    ),
-    /* Noise texture for the fuzzy, hairy edge effect */
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.4;
-  filter: blur(0.8px);
+  content: none;
+  background: none;
 }
 
 .project-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-    0 0 50px rgba(34, 211, 238, 0.2);
+  transform: translateY(-1px); /* match spotlight-split */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(99, 102, 241, 0.15); /* blue glow */
 }
 
 /* Ensure project card content is above the pseudo-elements */
@@ -804,6 +816,19 @@ html {
   background: var(--overlay-light);
   padding: 6px 10px;
   border-radius: 8px;
+}
+
+/* Blur-up placeholder effect for images */
+.blur-up {
+  filter: blur(16px);
+  transform: scale(1.02);
+  transition: filter .4s ease, transform .4s ease, opacity .3s ease;
+  opacity: 0.9;
+}
+.blur-up.is-loaded {
+  filter: blur(0);
+  transform: none;
+  opacity: 1;
 }
 
 .carousel-btn {
@@ -1582,4 +1607,51 @@ h2 {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     margin: 0 20px;
+}
+
+
+/* Section title utility: standardized subtitle styling across pages */
+.section-title {
+  /* Technology-esque monospace stack for titles */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: var(--white);
+  font-weight: 700;
+  /* Responsive, consistently large size */
+  font-size: clamp(28px, 3.2vw, 36px);
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+  margin-bottom: 16px; /* keep existing spacing harmony */
+}
+
+
+/* Technology-esque title font applied globally to headings */
+h1, h2, h3, h4, .site-title, .hero-title, .section-title, .spotlight-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-feature-settings: "calt" 0;
+  color: var(--white);
+}
+
+
+/* Preserve original font for the brand title in the header "island" */
+.site-header .site-title {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.type-caret {
+  display: inline-block;
+  width: 2px; /* thicker caret */
+  height: 0.9em;
+  background: currentColor;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+}
+
+/* Blink only when typing is finished */
+.type-caret.blink {
+  animation: caret-blink 1s step-end infinite;
+}
+
+@keyframes caret-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }

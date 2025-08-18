@@ -67,37 +67,25 @@ def _init_db():
     with _get_db() as conn:
         # Use a cursor for compatibility across drivers
         cur = conn.cursor()
-        if _is_postgres():
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS contact_messages (
-                    id SERIAL PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    email TEXT NOT NULL,
-                    message TEXT NOT NULL,
-                    created_at BIGINT NOT NULL,
-                    ip TEXT,
-                    ua TEXT
-                )
-                """
-            )
-        else:
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS contact_messages (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    email TEXT NOT NULL,
-                    message TEXT NOT NULL,
-                    created_at INTEGER NOT NULL,
-                    ip TEXT,
-                    ua TEXT
-                )
-                """
-            )
+        # Load SQL from files depending on the driver
         try:
-            conn.commit()
+            if _is_postgres():
+                sql_path = os.path.join(app.root_path, "sql", "create_contact_messages_postgres.sql")
+            else:
+                sql_path = os.path.join(app.root_path, "sql", "create_contact_messages_sqlite.sql")
+            with open(sql_path, "r") as f:
+                create_sql = f.read()
+            cur.execute(create_sql)
+            try:
+                conn.commit()
+            except Exception:
+                pass
         except Exception:
+            # If loading from file fails, do not crash app startup
+            try:
+                conn.rollback()
+            except Exception:
+                pass
             pass
 
 _init_db()
@@ -204,7 +192,7 @@ def _fetch_github_repos(username: str):
 
 
 @app.route("/")
-def home():  # put application's code here
+def home():
     return render_template("index.html")
 
 
@@ -272,12 +260,11 @@ def api_contact():
     with _get_db() as conn:
         if _is_postgres():
             cur = conn.cursor()
+            # Load INSERT SQL for Postgres from file
+            with open(os.path.join(app.root_path, "sql", "insert_contact_message_postgres.sql"), "r") as f:
+                insert_sql = f.read()
             cur.execute(
-                """
-                INSERT INTO contact_messages (name, email, message, created_at, ip, ua)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
+                insert_sql,
                 (name, email, message, ts, ip, ua),
             )
             row = cur.fetchone()
@@ -287,8 +274,11 @@ def api_contact():
             except Exception:
                 pass
         else:
+            # Load INSERT SQL for SQLite from file
+            with open(os.path.join(app.root_path, "sql", "insert_contact_message_sqlite.sql"), "r") as f:
+                insert_sql = f.read()
             cur = conn.execute(
-                "INSERT INTO contact_messages (name, email, message, created_at, ip, ua) VALUES (?, ?, ?, ?, ?, ?)",
+                insert_sql,
                 (name, email, message, ts, ip, ua),
             )
             msg_id = cur.lastrowid
@@ -396,7 +386,10 @@ def api_health():
     try:
         with _get_db() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT 1")
+            # Load health check SQL from file
+            with open(os.path.join(app.root_path, "sql", "health_check.sql"), "r") as f:
+                health_sql = f.read()
+            cur.execute(health_sql)
             one = cur.fetchone()
         return jsonify({
             "ok": True,

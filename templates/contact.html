@@ -13,7 +13,7 @@
     <div class="container">
       <div class="brand">
         <a href="{{ url_for('home') }}" class="logo-link" aria-label="Home">
-          <img class="logo" src="{{ url_for('static', filename='favicon.svg') }}" alt="YS logo">
+          <img class="logo blur-up" src="{{ url_for('static', filename='favicon.svg') }}" alt="YS logo" loading="lazy" decoding="async" srcset="{{ url_for('static', filename='favicon.svg') }} 1x, {{ url_for('static', filename='favicon.svg') }} 2x" sizes="(max-width: 600px) 32px, 40px">
         </a>
         <div class="brand-text">
           <h1 class="site-title">Contact Yusuf</h1>
@@ -24,7 +24,7 @@
         <a class="btn" href="{{ url_for('home') }}">Home</a>
         <a class="btn" href="{{ url_for('repos') }}">View my projects</a>
         <a class="btn primary" href="https://github.com/Yusuf-Siddiqui-08" target="_blank" rel="noopener">
-          <span aria-hidden="true" style="display:inline-flex;align-items:center;gap:8px;">
+          <span aria-hidden="true" class="icon-inline">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
             </svg>
@@ -38,13 +38,13 @@
   <main>
     <section class="section">
       <div class="container">
-        <h2 style="margin-top:0;">Contact Information</h2>
+        <h2 class="mt-0 section-title">Contact Information</h2>
         <p class="note">Feel free to reach out using any of the methods below.</p>
 
-        <div style="margin-top:16px;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;background:rgba(255,255,255,.03);">
-          <div class="contact-buttons" style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="panel-simple">
+          <div class="contact-buttons stack-v-12">
             <a class="btn" href="mailto:yusufs98783@gmail.com">
-              <span style="display:inline-flex;align-items:center;gap:8px;">
+              <span class="icon-inline">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.887.711-1.618 1.598-1.634L12 10.455l10.402-6.632A1.636 1.636 0 0 1 24 5.457z" fill="currentColor"/>
                 </svg>
@@ -53,7 +53,7 @@
             </a>
 
             <a class="btn" href="tel:16478529565">
-              <span style="display:inline-flex;align-items:center;gap:8px;">
+              <span class="icon-inline">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" fill="currentColor"/>
                 </svg>
@@ -62,11 +62,20 @@
             </a>
 
             <a class="btn" href="https://github.com/Yusuf-Siddiqui-08" target="_blank" rel="noopener">
-              <span style="display:inline-flex;align-items:center;gap:8px;">
+              <span class="icon-inline">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M12 .5C5.73.5.98 5.24.98 11.52c0 4.86 3.15 8.99 7.51 10.45.55.1.75-.24.75-.54 0-.27-.01-1.16-.02-2.1-3.06.67-3.71-1.3-3.71-1.3-.5-1.27-1.23-1.61-1.23-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.12 1.66 1.12.98 1.67 2.58 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.44-.28-5-1.22-5-5.44 0-1.2.43-2.19 1.13-2.97-.11-.28-.49-1.41.11-2.94 0 0 .93-.3 3.05 1.13a10.6 10.6 0 0 1 2.78-.37c.94 0 1.88.13 2.77.37 2.12-1.43 3.05-1.13 3.05-1.13.6 1.53.22 2.66.11 2.94.7.78 1.13 1.77 1.13 2.97 0 4.23-2.56 5.16-5 5.44.39.33.74.98.74 1.98 0 1.43-.01 2.58-.01 2.93 0 .3.2.65.76.54 4.35-1.46 7.5-5.59 7.5-10.45C23.02 5.24 18.27.5 12 .5z"/>
                 </svg>
                 <span>GitHub: Yusuf-Siddiqui-08</span>
+              </span>
+            </a>
+
+            <a class="btn" href="https://www.linkedin.com/in/yusuf-siddiqui-92703637a/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+              <span class="icon-inline">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.226.792 24 1.771 24h20.451C23.2 24 24 23.226 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003zM6.556 20.452H4.112V9h2.444v11.452zM5.337 7.433a1.815 1.815 0 11.001-3.631 1.815 1.815 0 01-.001 3.631zM20.447 20.452h-3.237v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.001V9h3.112v1.561h.045c.434-.82 1.494-1.683 3.073-1.683 3.29 0 3.894 2.166 3.894 4.984v6.59z"/>
+                </svg>
+                <span>LinkedIn: Yusuf Siddiqui</span>
               </span>
             </a>
           </div>
@@ -76,10 +85,10 @@
 
     <section class="section">
       <div class="container">
-        <h2 style="margin-top:0;">Send a message</h2>
+        <h2 class="mt-0 section-title">Send a message</h2>
         <p class="note">This form stores your message securely and helps me get back to you.</p>
 
-        <form id="contact-form" novalidate style="max-width:640px;">
+        <form id="contact-form" novalidate class="max-w-640">
           <div class="form-field">
             <label for="name">Name</label>
             <input id="name" name="name" type="text" required maxlength="120" placeholder="Your name" class="input">
@@ -115,65 +124,6 @@
     </div>
   </footer>
 
-  <script>
-    (function() {
-      const form = document.getElementById('contact-form');
-      const submitBtn = document.getElementById('contact-submit');
-      const statusEl = document.getElementById('contact-status');
-      const yearEl = document.getElementById('year');
-      if (yearEl) yearEl.textContent = new Date().getFullYear();
-      if (!form) return;
-
-      function setStatus(msg, ok = true) {
-        if (!statusEl) return;
-        statusEl.textContent = msg || '';
-        statusEl.style.color = ok ? 'var(--text-dim)' : '#ffb4b4';
-      }
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Sending…';
-        }
-        setStatus('Sending your message…');
-
-        const payload = {
-          name: document.getElementById('name')?.value?.trim() || '',
-          email: document.getElementById('email')?.value?.trim() || '',
-          message: document.getElementById('message')?.value?.trim() || '',
-          // Honeypot
-          website: document.getElementById('website')?.value || ''
-        };
-
-        try {
-          const res = await fetch('/api/contact', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          const json = await res.json().catch(() => ({}));
-          if (!res.ok || !json.ok) {
-            const msg = (json && json.error === 'validation_error') ? 'Please fill in all fields correctly.' :
-                        (json && json.error === 'rate_limited') ? 'Too many messages from your IP. Please try again later.' :
-                        'Something went wrong. Please try again.';
-            setStatus(msg, false);
-          } else {
-            setStatus('Thanks! Your message has been sent.');
-            form.reset();
-          }
-        } catch (err) {
-          setStatus('Network error. Please try again later.', false);
-        } finally {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Send message';
-          }
-        }
-        return false;
-      });
-    })();
-  </script>
   <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}" defer></script>
 </body>
 </html>
