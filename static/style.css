@@ -348,7 +348,7 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     /* Subtle liquid distortion */
     linear-gradient(90deg,
       transparent 0%,
@@ -374,7 +374,7 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     /* Very subtle liquid distortion */
     linear-gradient(90deg,
       transparent 0%,
@@ -769,11 +769,12 @@ html {
   padding: 10px 14px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Less purple, slightly desaturated blue-gray for header badges */
   background:
     linear-gradient(135deg,
-      rgba(14, 34, 96, 0.28) 0%,
-      rgba(14, 34, 96, 0.18) 50%,
-      rgba(14, 34, 96, 0.24) 100%
+      rgba(24, 36, 64, 0.20) 0%,
+      rgba(24, 36, 64, 0.12) 50%,
+      rgba(24, 36, 64, 0.18) 100%
     );
   backdrop-filter: saturate(180%) blur(20px) brightness(1.12) contrast(1.04);
   box-shadow:
@@ -1572,6 +1573,46 @@ html[data-theme="dark"] #theme-toggle .icon-moon { display: inline-block; }
 .hero .hero-box {
   display: block; /* stretch to container width to align with lower boxes */
   width: 100%;
+}
+
+/* Glass card style aligned exactly with Selected Work project-card */
+.glass-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+  background:
+    linear-gradient(135deg,
+      rgba(14, 34, 96, 0.32) 0%,
+      rgba(14, 34, 96, 0.20) 50%,
+      rgba(14, 34, 96, 0.28) 100%
+    );
+  backdrop-filter: saturate(180%) blur(25px) brightness(1.15) contrast(1.05);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(99, 102, 241, 0.12);
+}
+/* Sweep overlay to match project-card */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(14, 34, 96, 0.06) 30%,
+      rgba(14, 34, 96, 0.08) 50%,
+      rgba(14, 34, 96, 0.06) 70%,
+      transparent 100%
+    );
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(1px);
+  opacity: 0.3;
 }
 
 

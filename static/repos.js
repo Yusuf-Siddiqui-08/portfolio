@@ -493,7 +493,12 @@ function initTypewriterTitles() {
         // Start caret blinking after completion, synchronized to global timing
         // Only spotlight (project showcase) titles should lose their caret after a few seconds;
         // big titles like hero and section titles keep blinking indefinitely.
-        const removeAfter = el.classList.contains('spotlight-title') ? CARET_BLINK_LIFETIME_MS : null;
+        // Additionally, hide carets for the "What you'll find here" and "Why it exists" section titles (in #about)
+        const shouldRemoveCaret = (
+          el.classList.contains('spotlight-title') ||
+          (el.classList.contains('section-title') && el.closest('#about'))
+        );
+        const removeAfter = shouldRemoveCaret ? CARET_BLINK_LIFETIME_MS : null;
         syncCaretBlink(caret, removeAfter);
       }
     };

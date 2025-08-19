@@ -1,7 +1,9 @@
-from flask import Flask, render_template, jsonify, send_from_directory, request, Response
+from flask import Flask, render_template, jsonify, send_from_directory, request, Response, redirect
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
+from werkzeug.middleware.proxy_fix import ProxyFix
 from waitress import serve
 import os
 import time
@@ -35,6 +37,96 @@ def inject_asset_version():
 
 # Simple in-memory cache; good enough for small deployments
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
+
+# ---------- Security: Flask-Talisman ----------
+# Enforce HTTPS by default, but automatically disable in common local dev environments.
+# You can always override with TALISMAN_FORCE_HTTPS=0/1.
+_dev_flags = {
+    "FLASK_ENV": os.getenv("FLASK_ENV", "").lower(),
+    "ENV": os.getenv("ENV", "").lower(),
+    "DEBUG": os.getenv("DEBUG", "").lower(),
+}
+_host_env = os.getenv("HOST", "0.0.0.0").lower()
+_is_dev_like = (
+    _dev_flags["FLASK_ENV"] == "development"
+    or _dev_flags["ENV"] == "development"
+    or _dev_flags["DEBUG"] in ("1", "true", "yes")
+    or _host_env in ("127.0.0.1", "localhost")
+)
+_default_force_https = "0" if _is_dev_like else "1"
+# Final decision honors explicit env if provided, else uses smarter default
+force_https = (os.getenv("TALISMAN_FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
+
+# Base CSP; expanded below if CAPTCHA is enabled
+csp = {
+    'default-src': ["'self'"],
+    'base-uri': ["'self'"],
+    'object-src': ["'none'"],
+    'img-src': ["'self'", "data:"],
+    'style-src': ["'self'", "'unsafe-inline'"],  # inline styles used in templates
+    'script-src': ["'self'", "'unsafe-inline'"],  # small inline scripts used in templates
+    'connect-src': ["'self'"],  # XHR/Fetch to same-origin APIs
+    'form-action': ["'self'"],
+    'frame-ancestors': ["'self'"],
+}
+
+# Allow CAPTCHA providers if configured in templates
+if os.getenv("TURNSTILE_SITE_KEY"):
+    csp['script-src'] += ["https://challenges.cloudflare.com"]
+    csp['frame-src'] = csp.get('frame-src', []) + ["https://challenges.cloudflare.com"]
+if os.getenv("HCAPTCHA_SITE_KEY"):
+    csp['script-src'] += ["https://js.hcaptcha.com"]
+    csp['frame-src'] = csp.get('frame-src', []) + ["https://newassets.hcaptcha.com", "https://hcaptcha.com", "https://*.hcaptcha.com"]
+
+# If running behind a reverse proxy, enable ProxyFix so Flask/Talisman see the original scheme/host
+if os.getenv("USE_PROXY_FIX", "1") not in ("0", "false", "False"):
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
+# Secure cookie flags (HTTPS-only when force_https is enabled)
+app.config.update(
+    SESSION_COOKIE_SECURE=True if force_https else False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE=os.getenv("SESSION_COOKIE_SAMESITE", "Lax"),
+)
+
+talisman = Talisman(
+    app,
+    content_security_policy=csp,
+    force_https=force_https,
+    referrer_policy=os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin"),
+    frame_options=os.getenv("FRAME_OPTIONS", "SAMEORIGIN"),
+    strict_transport_security=True,
+    strict_transport_security_preload=False,
+    strict_transport_security_max_age=31536000,
+)
+
+# Canonical host enforcement (production)
+CANONICAL_HOST = os.getenv("CANONICAL_HOST", "yusufsiddiqui.dev")
+ENFORCE_CANONICAL_HOST = os.getenv("ENFORCE_CANONICAL_HOST", "1").lower() in ("1", "true", "yes")
+
+@app.before_request
+def _enforce_canonical_host():
+    # Only enforce for idempotent requests, and only when enabled
+    if not ENFORCE_CANONICAL_HOST:
+        return
+    if request.method not in ("GET", "HEAD"):
+        return
+
+    host = request.headers.get("Host") or request.host
+    if not host:
+        return
+
+    # Skip localhost/dev-like hosts
+    if host in ("localhost", "127.0.0.1") or host.startswith("127."):
+        return
+
+    if host != CANONICAL_HOST:
+        # Build redirect URL to canonical host, preserve path/query
+        target = request.url.replace(f"//{host}", f"//{CANONICAL_HOST}", 1)
+        # Ensure HTTPS if HTTPS is enforced
+        if force_https and request.scheme != "https":
+            target = target.replace("http://", "https://", 1)
+        return redirect(target, code=301)
 
 DB_PATH = os.getenv("DB_PATH") or os.path.join(app.root_path, "app.db")
 
@@ -106,6 +198,15 @@ try:
         print("[startup] Using PostgreSQL (DATABASE_URL detected)")
     else:
         print(f"[startup] Using SQLite at {DB_PATH}")
+except Exception:
+    pass
+
+# Log canonical host enforcement
+try:
+    if ENFORCE_CANONICAL_HOST:
+        print(f"[startup] Canonical host enforced: https://{CANONICAL_HOST}")
+    else:
+        print("[startup] Canonical host enforcement disabled")
 except Exception:
     pass
 
@@ -497,4 +598,21 @@ def handle_429(e):
 if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8080"))
-    serve(app, host=host, port=port)
+
+    enable_dev_https = os.getenv("ENABLE_DEV_HTTPS", "0").lower() in ("1", "true", "yes")
+    if enable_dev_https:
+        # Optional local HTTPS for development using Werkzeug's server with an ad-hoc cert.
+        # This is useful to test HTTPS redirects/CSP/HSTS locally without a reverse proxy.
+        dev_https_port = int(os.getenv("DEV_HTTPS_PORT", "8443"))
+        debug_flag = os.getenv("DEBUG", "").lower() in ("1", "true", "yes") or os.getenv("FLASK_ENV", "").lower() == "development"
+        print(f"[startup] DEV HTTPS mode enabled: https://{host}:{dev_https_port}")
+        print("[startup] Note: In this mode, the Flask dev server is used instead of Waitress.")
+        print("[startup] To disable, unset ENABLE_DEV_HTTPS or set it to 0.")
+        try:
+            # Use Flask's dev server with an ad-hoc SSL context.
+            app.run(host=host, port=dev_https_port, debug=debug_flag, ssl_context="adhoc")
+        except Exception as e:
+            print(f"[startup] Failed to start dev HTTPS server: {e}")
+    else:
+        # Production/normal mode: use Waitress (plain HTTP). For HTTPS, terminate TLS at a reverse proxy.
+        serve(app, host=host, port=port)

@@ -4,3 +4,4 @@ flask-caching
 flask-limiter
 waitress
 psycopg[binary]>=3.1
+flask-talisman
