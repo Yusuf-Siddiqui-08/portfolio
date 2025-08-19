@@ -1,5 +1,7 @@
 from flask import Flask, render_template, jsonify, send_from_directory, request, Response
 from flask_caching import Cache
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from waitress import serve
 import os
 import time
@@ -18,6 +20,14 @@ app = Flask(__name__)
 
 # Version string to bust browser cache for static assets
 ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
+
+# Flask-Limiter configuration (in-memory by default; configurable via env)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://"),
+    default_limits=[os.getenv("DEFAULT_RATE_LIMIT", "60 per minute")],
+)
 
 @app.context_processor
 def inject_asset_version():
@@ -203,10 +213,14 @@ def repos():
 
 @app.route("/contact")
 def contact():
-    return render_template("contact.html")
+    # Expose CAPTCHA site keys to template; widgets render only if configured
+    turnstile_site_key = os.getenv("TURNSTILE_SITE_KEY")
+    hcaptcha_site_key = os.getenv("HCAPTCHA_SITE_KEY")
+    return render_template("contact.html", turnstile_site_key=turnstile_site_key, hcaptcha_site_key=hcaptcha_site_key)
 
 
 @app.route("/api/github/repos")
+@limiter.limit(os.getenv("RL_GITHUB_REPOS", "30 per minute"))
 def api_github_repos():
     """
     Server-side endpoint to fetch GitHub repos to avoid exposing the GitHub API directly to clients.
@@ -233,6 +247,7 @@ def api_github_repos():
 
 
 @app.post("/api/contact")
+@limiter.limit(os.getenv("RL_CONTACT", "3 per minute; 10 per hour"))
 def api_contact():
     data = request.get_json(silent=True) or request.form
 
@@ -247,13 +262,42 @@ def api_contact():
     if not name or "@" not in email or len(message) < 5:
         return jsonify({"ok": False, "error": "validation_error"}), 400
 
-    # Simple IP rate limit: 5 submissions per hour
+    # CAPTCHA verification (if configured)
     ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
-    rl_key = f"rl:contact:{ip}"
-    count = cache.get(rl_key) or 0
-    if count >= 5:
-        return jsonify({"ok": False, "error": "rate_limited"}), 429
-    cache.set(rl_key, count + 1, timeout=3600)
+    turnstile_secret = os.getenv("TURNSTILE_SECRET_KEY")
+    hcaptcha_secret = os.getenv("HCAPTCHA_SECRET_KEY")
+
+    # Prefer Turnstile if both configured
+    if turnstile_secret:
+        token = (data.get("cf_turnstile_token") or data.get("cf-turnstile-response") or "").strip()
+        if not token:
+            return jsonify({"ok": False, "error": "captcha_required"}), 400
+        try:
+            vresp = requests.post(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                data={"secret": turnstile_secret, "response": token, "remoteip": ip},
+                timeout=5,
+            )
+            vjson = vresp.json() if vresp.ok else {}
+            if not vjson.get("success"):
+                return jsonify({"ok": False, "error": "captcha_failed"}), 400
+        except Exception:
+            return jsonify({"ok": False, "error": "captcha_failed"}), 400
+    elif hcaptcha_secret:
+        token = (data.get("hcaptcha_token") or data.get("h-captcha-response") or "").strip()
+        if not token:
+            return jsonify({"ok": False, "error": "captcha_required"}), 400
+        try:
+            vresp = requests.post(
+                "https://hcaptcha.com/siteverify",
+                data={"secret": hcaptcha_secret, "response": token, "remoteip": ip},
+                timeout=5,
+            )
+            vjson = vresp.json() if vresp.ok else {}
+            if not vjson.get("success"):
+                return jsonify({"ok": False, "error": "captcha_failed"}), 400
+        except Exception:
+            return jsonify({"ok": False, "error": "captcha_failed"}), 400
 
     ts = int(time.time())
     ua = request.headers.get("User-Agent", "")
@@ -287,6 +331,7 @@ def api_contact():
 
 
 @app.get("/api/search")
+@limiter.limit(os.getenv("RL_SEARCH", "20 per minute"))
 def api_search():
     q = (request.args.get("q") or "").strip()
     if not q:
@@ -398,6 +443,55 @@ def api_health():
         }), 200
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+# ---------- Error Handlers ----------
+@app.errorhandler(404)
+def handle_404(e):
+    # JSON for API routes
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "ok": False,
+            "error": "not_found",
+            "message": "Resource not found",
+            "path": request.path,
+            "timestamp": int(time.time()),
+        }), 404
+    # HTML for normal routes
+    return render_template("404.html", path=request.path), 404
+
+
+@app.errorhandler(500)
+def handle_500(e):
+    # JSON for API routes
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "ok": False,
+            "error": "server_error",
+            "message": "An internal error occurred",
+            "path": request.path,
+            "timestamp": int(time.time()),
+        }), 500
+    # HTML for normal routes
+    return render_template("500.html"), 500
+
+
+# Rate limit (429) handler to return JSON for API endpoints
+@app.errorhandler(429)
+def handle_429(e):
+    if request.path.startswith("/api/"):
+        # Flask-Limiter attaches a description; include Retry-After if available
+        retry_after = getattr(e, "retry_after", None)
+        resp = {
+            "ok": False,
+            "error": "rate_limited",
+            "message": getattr(e, "description", "Too many requests"),
+            "path": request.path,
+            "timestamp": int(time.time()),
+        }
+        return jsonify(resp), 429
+    # For non-API paths, just show 429 text
+    return ("Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8"})
 
 
 if __name__ == "__main__":

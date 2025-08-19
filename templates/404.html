@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Page not found — 404</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <a href="{{ url_for('home') }}" class="logo-link" aria-label="Home">
+          <img class="logo" src="{{ url_for('static', filename='favicon.svg') }}" alt="YS logo">
+        </a>
+        <div class="brand-text">
+          <h1 class="site-title">Page not found</h1>
+          <p class="site-subtitle">The page you were looking for doesn’t exist.</p>
+        </div>
+      </div>
+      <nav class="actions">
+        <a class="btn" href="{{ url_for('repos') }}">View my projects</a>
+        <a class="btn" href="{{ url_for('contact') }}">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <h2 class="mt-0">404 — Not Found</h2>
+        {% if path %}
+        <p class="note">We couldn’t find a page at <code>{{ path }}</code>.</p>
+        {% endif %}
+        <p>Here are some helpful links:</p>
+        <div class="hero-ctas">
+          <a class="btn" href="{{ url_for('home') }}">Go to Home</a>
+          <a class="btn" href="{{ url_for('repos') }}">Browse Projects</a>
+          <a class="btn" href="{{ url_for('contact') }}">Contact me</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="year"></span> Yusuf Siddiqui.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

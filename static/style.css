@@ -100,18 +100,6 @@ html {
 
 .max-w-640 { max-width: 640px; }
 
-.repo-search-input {
-  width: 100%;
-  max-width: 480px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.03);
-  color: var(--text);
-  outline: none;
-}
-
-.cover-pointer { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
 
 .container {
   width: 100%;
@@ -559,9 +547,9 @@ html {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  font-weight: 600;
-  border-radius: 12px;
+  padding: 10px 14px; /* match standard .btn size */
+  font-weight: 500; /* align closer to base button weight */
+  border-radius: 10px; /* match standard .btn radius */
   background: 
     linear-gradient(135deg, 
       rgba(27, 16, 58, 0.4) 0%,
@@ -723,6 +711,75 @@ html {
 .project-card > * {
   position: relative;
   z-index: 1;
+}
+
+/* Reusable glass card that matches project-card appearance */
+.glass-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+  background:
+    linear-gradient(135deg,
+      rgba(14, 34, 96, 0.32) 0%,
+      rgba(14, 34, 96, 0.20) 50%,
+      rgba(14, 34, 96, 0.28) 100%
+    );
+  backdrop-filter: saturate(180%) blur(25px) brightness(1.15) contrast(1.05);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(99, 102, 241, 0.12);
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(14, 34, 96, 0.06) 30%,
+      rgba(14, 34, 96, 0.08) 50%,
+      rgba(14, 34, 96, 0.06) 70%,
+      transparent 100%
+    );
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(1px);
+  opacity: 0.3;
+}
+.glass-card::after { content: none; }
+.glass-card:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(99, 102, 241, 0.15);
+}
+.glass-card > * { position: relative; z-index: 1; }
+
+/* Title glass: compact card look for headings */
+.title-glass {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(135deg,
+      rgba(14, 34, 96, 0.28) 0%,
+      rgba(14, 34, 96, 0.18) 50%,
+      rgba(14, 34, 96, 0.24) 100%
+    );
+  backdrop-filter: saturate(180%) blur(20px) brightness(1.12) contrast(1.04);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .carousel {
@@ -1259,175 +1316,6 @@ h2 {
     margin-bottom: 24px;
 }
 
-/* Contact grid */
-.contact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 24px;
-    margin-top: 24px;
-}
-
-.contact-box {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 24px;
-    background: color-mix(in srgb, var(--bg-blur) 60%, rgba(255, 255, 255, 0.15));
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    backdrop-filter: saturate(200%) blur(25px) brightness(1.2);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.contact-box:hover {
-    background: var(--white-08);
-    border-color: var(--white-14);
-    transform: translateY(-2px);
-}
-
-.contact-icon {
-    flex-shrink: 0;
-    width: 64px;
-    height: 64px;
-    background: color-mix(in srgb, var(--bg-blur) 70%, rgba(255, 255, 255, 0.2));
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: saturate(200%) blur(20px) brightness(1.15);
-    box-shadow:
-      0 4px 16px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.contact-box:hover .contact-icon {
-    background: var(--white-08);
-    transform: scale(1.05);
-}
-
-.contact-info {
-    flex: 1;
-}
-
-.contact-info h3 {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: var(--white);
-}
-
-.contact-info p {
-    font-size: 14px;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-}
-
-.contact-link {
-    position: relative;
-    display: inline-block;
-    padding: 6px 12px;
-    background: 
-      linear-gradient(135deg, 
-        rgba(27, 16, 58, 0.5) 0%,
-        rgba(34, 211, 238, 0.2) 50%,
-        rgba(27, 16, 58, 0.4) 100%
-      );
-    color: var(--white);
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: saturate(180%) blur(20px) brightness(1.1) contrast(1.05);
-    box-shadow: 
-      0 4px 16px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.03),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-      0 0 20px rgba(34, 211, 238, 0.15);
-    transition: all 0.3s ease;
-    overflow: hidden;
-}
-
-.contact-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    /* Subtle liquid distortion */
-    linear-gradient(90deg,
-      transparent 0%,
-      rgba(27, 16, 58, 0.2) 20%,
-      rgba(27, 16, 58, 0.3) 40%,
-      rgba(27, 16, 58, 0.2) 60%,
-      rgba(27, 16, 58, 0.3) 80%,
-      transparent 100%
-    ),
-    /* Subtle light positioning */
-    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
-  border-radius: 6px;
-  pointer-events: none;
-  z-index: -1;
-  filter: blur(0.5px);
-}
-
-.contact-link::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    /* Very subtle liquid distortion */
-    linear-gradient(90deg,
-      transparent 0%,
-      rgba(27, 16, 58, 0.1) 30%,
-      rgba(27, 16, 58, 0.15) 50%,
-      rgba(27, 16, 58, 0.1) 70%,
-      transparent 100%
-    ),
-    /* Noise texture for the fuzzy, hairy edge effect */
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
-  border-radius: 6px;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.3;
-  filter: blur(0.8px);
-}
-
-.contact-link:hover {
-    background: 
-      linear-gradient(135deg, 
-        rgba(27, 16, 58, 0.6) 0%,
-        rgba(34, 211, 238, 0.3) 50%,
-        rgba(27, 16, 58, 0.5) 100%
-      );
-    transform: translateY(-1px);
-    box-shadow: 
-      0 6px 20px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-      0 0 30px rgba(34, 211, 238, 0.2);
-}
-
-/* Ensure contact-link content is above the pseudo-elements */
-.contact-link > * {
-  position: relative;
-  z-index: 1;
-}
 
 /* Footer */
 .site-footer {
@@ -1487,127 +1375,11 @@ h2 {
     }
 }
 
-/* Contact page button sizing adjustments */
-.contact-buttons .btn {
-    align-self: flex-start;
-    min-width: 240px; /* less wide than full width */
-    padding: 14px 20px; /* thicker interior padding */
-}
 
-.contact-buttons .btn .btn-content {
-    padding: 2px 0; /* slight extra interior breathing room */
-}
-
-/* General glass card styling for consistent effects across the site */
-.glass-card {
-    background: color-mix(in srgb, var(--bg-blur) 70%, rgba(255, 255, 255, 0.1));
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    backdrop-filter: saturate(180%) blur(20px) brightness(1.1);
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
 
 /* Repository card liquid glass effect - matching the header style */
-.repo-card {
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 16px;
-    background: 
-        linear-gradient(135deg, 
-            rgba(27, 16, 58, 0.4) 0%,
-            rgba(34, 211, 238, 0.15) 50%,
-            rgba(27, 16, 58, 0.3) 100%
-        );
-    backdrop-filter: saturate(180%) blur(32px) brightness(1.15) contrast(1.1);
-    box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.03),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-        0 0 40px rgba(34, 211, 238, 0.15);
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.repo-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        /* Subtle liquid distortion - much more natural */
-        linear-gradient(90deg,
-            transparent 0%,
-            rgba(27, 16, 58, 0.15) 20%,
-            rgba(27, 16, 58, 0.25) 40%,
-            rgba(27, 16, 58, 0.15) 60%,
-            rgba(27, 16, 58, 0.25) 80%,
-            transparent 100%
-        ),
-        /* Subtle light positioning */
-        radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: -1;
-    filter: blur(0.5px);
-}
-
-.repo-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        /* Very subtle liquid distortion - barely visible */
-        linear-gradient(90deg,
-            transparent 0%,
-            rgba(27, 16, 58, 0.08) 30%,
-            rgba(27, 16, 58, 0.12) 50%,
-            rgba(27, 16, 58, 0.08) 70%,
-            transparent 100%
-        ),
-        /* Noise texture for the fuzzy, hairy edge effect */
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: -1;
-    opacity: 0.4;
-    filter: blur(0.8px);
-}
-
-.repo-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-        0 12px 40px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-        0 0 50px rgba(34, 211, 238, 0.2);
-}
-
-/* Ensure repository card content is above the pseudo-elements */
-.repo-card > * {
-    position: relative;
-    z-index: 1;
-}
 
 /* Glass effect for muted sections */
-.section.muted {
-    background: color-mix(in srgb, var(--muted) 80%, rgba(255, 255, 255, 0.05));
-    backdrop-filter: saturate(180%) blur(15px) brightness(1.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    margin: 0 20px;
-}
 
 
 /* Section title utility: standardized subtitle styling across pages */
@@ -1625,7 +1397,7 @@ h2 {
 
 
 /* Technology-esque title font applied globally to headings */
-h1, h2, h3, h4, .site-title, .hero-title, .section-title, .spotlight-title {
+h1, h2, h3, h4, .site-title, .hero-title, .spotlight-title {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-feature-settings: "calt" 0;
   color: var(--white);
@@ -1654,4 +1426,471 @@ h1, h2, h3, h4, .site-title, .hero-title, .section-title, .spotlight-title {
 @keyframes caret-blink {
   0%, 100% { opacity: 0; }
   50% { opacity: 1; }
+}
+
+
+/* Light theme overrides using data-theme on <html> */
+html[data-theme="light"] {
+  /* Base palette for light mode */
+  --bg: #f7f7fb;
+  --panel-hex: #ffffff;
+  --muted: #ffffff;
+  --text: #0f1220;
+  --text-dim: #4b5563;
+  /* Keep brand colors consistent */
+  --primary: var(--primary-hex);
+  --primary-600: #4f52d6;
+}
+
+/* Override page background gradients for light mode */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(34, 211, 238, 0.12), transparent 60%),
+    radial-gradient(1200px 600px at 80% 110%, rgba(99, 102, 241, 0.10), transparent 60%),
+    #f7f7fb;
+  color: var(--text);
+}
+
+/* Light theme form controls: ensure visible borders/outlines */
+html[data-theme="light"] .input,
+html[data-theme="light"] .textarea,
+html[data-theme="light"] .repo-search-input {
+  border: 1px solid rgba(17, 24, 39, 0.18); /* subtle dark border for light bg */
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+}
+html[data-theme="light"] .input:focus,
+html[data-theme="light"] .textarea:focus,
+html[data-theme="light"] .repo-search-input:focus {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+  background: #ffffff;
+}
+
+/* Ensure body copy is not white in light mode */
+html[data-theme="light"] .hero-text,
+html[data-theme="light"] .note {
+  color: var(--text);
+}
+
+/* Revert light mode titles to grey */
+html[data-theme="light"] .section-title {
+  color: var(--text-dim);
+}
+html[data-theme="light"] .hero .hero-title {
+  color: var(--text-dim);
+}
+
+/* Theme toggle icon-only button visibility rules */
+#theme-toggle { display: inline-flex; align-items: center; justify-content: center; }
+#theme-toggle svg { width: 18px; height: 18px; display: block; }
+#theme-toggle .icon-sun, #theme-toggle .icon-moon { display: none; }
+html[data-theme="light"] #theme-toggle .icon-sun { display: inline-block; }
+html[data-theme="dark"] #theme-toggle .icon-moon { display: inline-block; }
+
+/* Theme splash overlay for light↔dark transitions */
+:root {
+  --splash-x: 0px;
+  --splash-y: 0px;
+  --splash-size: 0px;
+  --splash-color: #000000;
+}
+
+.theme-splash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: var(--splash-color);
+  clip-path: circle(var(--splash-size) at var(--splash-x) var(--splash-y));
+  -webkit-clip-path: circle(var(--splash-size) at var(--splash-x) var(--splash-y));
+  transition: clip-path 600ms ease-out, -webkit-clip-path 600ms ease-out, background-color 300ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-splash-overlay {
+    transition: none;
+  }
+}
+
+/* View Transitions: circular reveal for theme switch (progressive enhancement) */
+:root {
+  --vt-x: 50vw;
+  --vt-y: 50vh;
+  --vt-r: 0px;
+}
+
+/* Disable default UA animations except during our custom theme transition */
+:root:not(.theme-vt-active)::view-transition-old(root),
+:root:not(.theme-vt-active)::view-transition-new(root) {
+  animation: none;
+}
+
+/* Scope animations only while active to avoid interfering with other transitions */
+.theme-vt-active::view-transition-group(root) { animation-duration: 600ms; }
+.theme-vt-active::view-transition-image-pair(root) { animation-duration: 600ms; }
+.theme-vt-active::view-transition-old(root) {
+  animation: vt-circle-out 600ms ease-out forwards;
+}
+.theme-vt-active::view-transition-new(root) {
+  animation: vt-circle-in 600ms ease-out forwards;
+}
+
+@keyframes vt-circle-in {
+  from { clip-path: circle(0 at var(--vt-x) var(--vt-y)); }
+  to   { clip-path: circle(var(--vt-r) at var(--vt-x) var(--vt-y)); }
+}
+
+@keyframes vt-circle-out {
+  from { clip-path: circle(var(--vt-r) at var(--vt-x) var(--vt-y)); }
+  to   { clip-path: circle(0 at var(--vt-x) var(--vt-y)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-vt-active::view-transition-old(root),
+  .theme-vt-active::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+
+/* === Reintegration of page-specific styles (undo split) === */
+
+/* From static/css/index.css */
+/* Make the two glass-card box titles smaller without affecting other section titles */
+.glass-card .section-title {
+  font-size: clamp(22px, 2.4vw, 28px);
+}
+
+/* Make the hero tagline title white for clarity and emphasis */
+.hero .hero-title {
+  color: var(--white);
+}
+
+/* Put a glass box around the hero intro */
+.hero .hero-box {
+  display: block; /* stretch to container width to align with lower boxes */
+  width: 100%;
+}
+
+/* Lighter glass card look (as in the screenshot) applied site-wide
+   Overrides the earlier darker deep-blue gradient version */
+.glass-card {
+  border-radius: 20px; /* keep consistent with hero */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--bg-blur) 70%, rgba(255, 255, 255, 0.10));
+  backdrop-filter: saturate(180%) blur(20px) brightness(1.1);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+/* Neutralize the heavy blue-tinted sweep so the card reads lighter */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.06) 30%,
+      rgba(27, 16, 58, 0.08) 50%,
+      rgba(27, 16, 58, 0.06) 70%,
+      transparent 100%
+    );
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.8px);
+  opacity: 0.2;
+}
+
+/* From static/css/repos.css */
+/* Page-specific styles for repos page */
+
+/* Search input specific to repos page */
+.repo-search-input {
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  outline: none;
+}
+
+/* Image helper used only in repos carousels */
+.cover-pointer { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+
+/* Repository card liquid glass effect */
+.repo-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  background:
+    linear-gradient(135deg,
+      rgba(27, 16, 58, 0.4) 0%,
+      rgba(34, 211, 238, 0.15) 50%,
+      rgba(27, 16, 58, 0.3) 100%
+    );
+  backdrop-filter: saturate(180%) blur(32px) brightness(1.15) contrast(1.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(34, 211, 238, 0.15);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.repo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.15) 20%,
+      rgba(27, 16, 58, 0.25) 40%,
+      rgba(27, 16, 58, 0.15) 60%,
+      rgba(27, 16, 58, 0.25) 80%,
+      transparent 100%
+    ),
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.repo-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.08) 30%,
+      rgba(27, 16, 58, 0.12) 50%,
+      rgba(27, 16, 58, 0.08) 70%,
+      transparent 100%
+    ),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  filter: blur(0.8px);
+}
+
+.repo-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 50px rgba(34, 211, 238, 0.2);
+}
+
+/* Ensure repository card content is above the pseudo-elements */
+.repo-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Muted section wrapper used on repos */
+.section.muted {
+  background: color-mix(in srgb, var(--muted) 80%, rgba(255, 255, 255, 0.05));
+  backdrop-filter: saturate(180%) blur(15px) brightness(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  margin: 0 20px;
+}
+
+/* From static/css/contact.css */
+/* Page-specific styles for contact page */
+
+/* Contact grid and boxes */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.contact-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg-blur) 60%, rgba(255, 255, 255, 0.15));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  backdrop-filter: saturate(200%) blur(25px) brightness(1.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.contact-box:hover {
+  background: var(--white-08);
+  border-color: var(--white-14);
+  transform: translateY(-2px);
+}
+
+.contact-icon {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  background: color-mix(in srgb, var(--bg-blur) 70%, rgba(255, 255, 255, 0.2));
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: saturate(200%) blur(20px) brightness(1.15);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.contact-box:hover .contact-icon {
+  background: var(--white-08);
+  transform: scale(1.05);
+}
+
+.contact-info { flex: 1; }
+
+.contact-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--white);
+}
+
+.contact-info p {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+/* Contact link styles */
+.contact-link {
+  position: relative;
+  display: inline-block;
+  padding: 6px 12px;
+  background:
+    linear-gradient(135deg,
+      rgba(27, 16, 58, 0.5) 0%,
+      rgba(34, 211, 238, 0.2) 50%,
+      rgba(27, 16, 58, 0.4) 100%
+    );
+  color: var(--white);
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: saturate(180%) blur(20px) brightness(1.1) contrast(1.05);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(34, 211, 238, 0.15);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.contact-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.2) 20%,
+      rgba(27, 16, 58, 0.3) 40%,
+      rgba(27, 16, 58, 0.2) 60%,
+      rgba(27, 16, 58, 0.3) 80%,
+      transparent 100%
+    ),
+    radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.contact-link::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 16, 58, 0.1) 30%,
+      rgba(27, 16, 58, 0.15) 50%,
+      rgba(27, 16, 58, 0.1) 70%,
+      transparent 100%
+    ),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(0.8px);
+}
+
+.contact-link:hover {
+  background:
+    linear-gradient(135deg,
+      rgba(27, 16, 58, 0.6) 0%,
+      rgba(34, 211, 238, 0.3) 50%,
+      rgba(27, 16, 58, 0.5) 100%
+    );
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 30px rgba(34, 211, 238, 0.2);
+}
+
+/* Ensure contact-link content is above the pseudo-elements */
+.contact-link > * { position: relative; z-index: 1; }
+
+/* Contact page button sizing adjustments */
+.contact-buttons .btn {
+  align-self: flex-start;
+  min-width: 240px;
+  padding: 14px 20px;
+}
+
+.contact-buttons .btn .btn-content {
+  padding: 2px 0;
 }

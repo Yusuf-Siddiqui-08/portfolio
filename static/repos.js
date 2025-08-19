@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     yearEl.textContent = new Date().getFullYear();
   }
 
+  // Initialize theme toggle and sync button text
+  initTheme();
+
   // Initialize blur-up behavior on images
   initBlurUpImages();
 
@@ -348,6 +351,16 @@ function initContactForm() {
       website: document.getElementById('website')?.value || ''
     };
 
+    // Include CAPTCHA token if available
+    const cfTokenEl = document.querySelector('input[name="cf-turnstile-response"]');
+    if (cfTokenEl && cfTokenEl.value) {
+      payload.cf_turnstile_token = cfTokenEl.value;
+    }
+    const hcTokenEl = document.querySelector('textarea[name="h-captcha-response"], input[name="h-captcha-response"]');
+    if (hcTokenEl && hcTokenEl.value) {
+      payload.hcaptcha_token = hcTokenEl.value;
+    }
+
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
@@ -511,4 +524,158 @@ function initTypewriterTitles() {
       io.observe(el);
     }
   });
+}
+
+
+// Theme handling: toggle and persistence using data-theme on <html>
+function applyTheme(theme) {
+  try {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  } catch (e) {
+    // no-op
+  }
+}
+
+function prefersReducedMotion() {
+  try {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch (e) {
+    return false;
+  }
+}
+
+function themeSplashTransition(event, nextTheme, options = {}) {
+  const duration = options.duration || 600;
+  const root = document.documentElement;
+
+  // Reduced motion: switch instantly
+  if (prefersReducedMotion()) {
+    applyTheme(nextTheme);
+    updateThemeToggleLabel(nextTheme);
+    return;
+  }
+
+  // Compute click/touch coordinates; fall back to button center or viewport center
+  let x, y;
+  if (event) {
+    // Pointer events (mouse)
+    if (typeof event.clientX === 'number' && typeof event.clientY === 'number' && (event.clientX !== 0 || event.clientY !== 0)) {
+      x = event.clientX; y = event.clientY;
+    // Touch events
+    } else if (event.touches && event.touches[0]) {
+      x = event.touches[0].clientX; y = event.touches[0].clientY;
+    } else if (event.changedTouches && event.changedTouches[0]) {
+      x = event.changedTouches[0].clientX; y = event.changedTouches[0].clientY;
+    }
+    // Element center (e.g., keyboard activation)
+    if ((typeof x !== 'number' || typeof y !== 'number') && event.currentTarget && typeof event.currentTarget.getBoundingClientRect === 'function') {
+      const rect = event.currentTarget.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    }
+  }
+  if (typeof x !== 'number') x = window.innerWidth / 2;
+  if (typeof y !== 'number') y = window.innerHeight / 2;
+
+  // Radius large enough to cover the furthest corner
+  const maxX = Math.max(x, window.innerWidth - x);
+  const maxY = Math.max(y, window.innerHeight - y);
+  const radius = Math.ceil(Math.hypot(maxX, maxY));
+
+  // Modern path: View Transitions API to reveal actual new theme content
+  const supportsVT = typeof document.startViewTransition === 'function';
+  if (supportsVT) {
+    // Set vars for animation and enable scoped animations
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', radius + 'px');
+
+    const cleanup = () => {
+      root.classList.remove('theme-vt-active');
+      // Optionally clear vars
+      // root.style.removeProperty('--vt-x'); root.style.removeProperty('--vt-y'); root.style.removeProperty('--vt-r');
+    };
+
+    const transition = document.startViewTransition(() => {
+      applyTheme(nextTheme);
+      updateThemeToggleLabel(nextTheme);
+    });
+
+    transition.ready.then(() => {
+      root.classList.add('theme-vt-active');
+    }).catch(() => {});
+
+    transition.finished.finally(cleanup);
+    return;
+  }
+
+  // Fallback path: solid color overlay splash
+  const body = document.body;
+  const overlay = document.createElement('div');
+  overlay.className = 'theme-splash-overlay';
+  const targetColor = nextTheme === 'dark' ? '#0a0516' : '#f7f7fb';
+  overlay.style.setProperty('--splash-x', x + 'px');
+  overlay.style.setProperty('--splash-y', y + 'px');
+  overlay.style.setProperty('--splash-size', '0px');
+  overlay.style.setProperty('--splash-color', targetColor);
+
+  body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.style.setProperty('--splash-size', radius + 'px');
+    });
+  });
+
+  const onDone = () => {
+    overlay.removeEventListener('transitionend', onDone);
+    applyTheme(nextTheme);
+    updateThemeToggleLabel(nextTheme);
+    requestAnimationFrame(() => {
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    });
+  };
+
+  const timer = setTimeout(onDone, duration + 50);
+  overlay.addEventListener('transitionend', () => {
+    clearTimeout(timer);
+    onDone();
+  }, { once: true });
+}
+
+function getInitialTheme() {
+  try {
+    const stored = localStorage.getItem('theme');
+    if (stored === 'light' || stored === 'dark') return stored;
+  } catch (e) {}
+  // fallback to prefers-color-scheme
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  } catch (e) {}
+  return 'dark'; // default to dark to match current styling
+}
+
+function updateThemeToggleLabel(theme) {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const next = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  // Keep icon markup intact; update only accessible label
+  btn.setAttribute('aria-label', 'Switch to ' + next);
+}
+
+function initTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || getInitialTheme();
+  applyTheme(current);
+  updateThemeToggleLabel(current);
+  const btn = document.getElementById('theme-toggle');
+  if (btn && !btn.dataset.themeWired) {
+    btn.dataset.themeWired = '1';
+    btn.addEventListener('click', (e) => {
+      const now = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = now === 'dark' ? 'light' : 'dark';
+      // Use splash transition from the click position
+      themeSplashTransition(e, next, { duration: 600 });
+    });
+  }
 }

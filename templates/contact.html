@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Get in touch with Yusuf Siddiqui. Email, phone, and GitHub profile.">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
+  <script>(function(){try{var t=localStorage.getItem('theme');var th=t||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme', th);}catch(e){}})();</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
 </head>
 <body>
@@ -31,6 +32,26 @@
             <span>View GitHub Profile</span>
           </span>
         </a>
+        <button class="btn" id="theme-toggle" type="button" aria-label="Toggle theme">
+                  <span class="icon-sun" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="5"></circle>
+                      <line x1="12" y1="1" x2="12" y2="3"></line>
+                      <line x1="12" y1="21" x2="12" y2="23"></line>
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                      <line x1="1" y1="12" x2="3" y2="12"></line>
+                      <line x1="21" y1="12" x2="23" y2="12"></line>
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                  </span>
+                  <span class="icon-moon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+                  </span>
+                </button>
       </nav>
     </div>
   </header>
@@ -38,10 +59,10 @@
   <main>
     <section class="section">
       <div class="container">
-        <h2 class="mt-0 section-title">Contact Information</h2>
+        <h2 class="mt-0 section-title title-glass">Contact Information</h2>
         <p class="note">Feel free to reach out using any of the methods below.</p>
 
-        <div class="panel-simple">
+        <div class="glass-card">
           <div class="contact-buttons stack-v-12">
             <a class="btn" href="mailto:yusufs98783@gmail.com">
               <span class="icon-inline">
@@ -85,7 +106,7 @@
 
     <section class="section">
       <div class="container">
-        <h2 class="mt-0 section-title">Send a message</h2>
+        <h2 class="mt-0 section-title title-glass">Send a message</h2>
         <p class="note">This form stores your message securely and helps me get back to you.</p>
 
         <form id="contact-form" novalidate class="max-w-640">
@@ -106,6 +127,19 @@
             <label for="website">Website</label>
             <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
           </div>
+
+          <!-- CAPTCHA (renders only if configured) -->
+          {% if turnstile_site_key %}
+          <div class="form-field">
+            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+          </div>
+          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+          {% elif hcaptcha_site_key %}
+          <div class="form-field">
+            <div class="h-captcha" data-sitekey="{{ hcaptcha_site_key }}"></div>
+          </div>
+          <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+          {% endif %}
 
           <div id="contact-status" class="note" role="status" aria-live="polite"></div>
 
