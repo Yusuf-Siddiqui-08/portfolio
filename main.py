@@ -24,11 +24,13 @@ app = Flask(__name__)
 ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
 
 # Flask-Limiter configuration (in-memory by default; configurable via env)
+_default_rate = (os.getenv("DEFAULT_RATE_LIMIT", "") or "").strip()
+_default_limits = [_default_rate] if _default_rate else None
 limiter = Limiter(
     get_remote_address,
     app=app,
     storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://"),
-    default_limits=[os.getenv("DEFAULT_RATE_LIMIT", "60 per minute")],
+    default_limits=_default_limits,
 )
 
 @app.context_processor
@@ -112,20 +114,45 @@ def _enforce_canonical_host():
     if request.method not in ("GET", "HEAD"):
         return
 
-    host = request.headers.get("Host") or request.host
+    # Prefer forwarded host if present, fall back to Host/request.host
+    raw_host = (
+        request.headers.get("X-Forwarded-Host")
+        or request.headers.get("Host")
+        or request.host
+        or ""
+    )
+
+    def _norm_host(h: str) -> str:
+        # Take first value if comma-separated, strip port, lowercase
+        h = (h or "").split(",", 1)[0].strip().lower()
+        if ":" in h:
+            h = h.split(":", 1)[0]
+        return h
+
+    host = _norm_host(raw_host)
+    canonical = _norm_host(CANONICAL_HOST)
     if not host:
         return
 
     # Skip localhost/dev-like hosts
-    if host in ("localhost", "127.0.0.1") or host.startswith("127."):
+    if host == "localhost" or host.startswith("127."):
         return
 
-    if host != CANONICAL_HOST:
-        # Build redirect URL to canonical host, preserve path/query
-        target = request.url.replace(f"//{host}", f"//{CANONICAL_HOST}", 1)
-        # Ensure HTTPS if HTTPS is enforced
-        if force_https and request.scheme != "https":
-            target = target.replace("http://", "https://", 1)
+    if host != canonical:
+        # Build redirect URL to canonical host with correct scheme, preserving path and query
+        try:
+            from urllib.parse import urlsplit, urlunsplit
+        except Exception:
+            # Fallback: simple replace (should rarely happen)
+            target = request.url.replace(f"//{raw_host}", f"//{CANONICAL_HOST}", 1)
+            if force_https and request.scheme != "https":
+                target = target.replace("http://", "https://", 1)
+            return redirect(target, code=301)
+
+        parts = urlsplit(request.url)
+        scheme = "https" if force_https else parts.scheme or "http"
+        netloc = CANONICAL_HOST  # honor any port in env if explicitly set
+        target = urlunsplit((scheme, netloc, parts.path, parts.query, parts.fragment))
         return redirect(target, code=301)
 
 DB_PATH = os.getenv("DB_PATH") or os.path.join(app.root_path, "app.db")
