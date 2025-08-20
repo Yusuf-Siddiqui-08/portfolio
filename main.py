@@ -55,8 +55,10 @@ _is_dev_like = (
     or _dev_flags["DEBUG"] in ("1", "true", "yes")
     or _host_env in ("127.0.0.1", "localhost")
 )
-_default_force_https = "0" if _is_dev_like else "1"
-# Final decision honors explicit env if provided, else uses smarter default
+# Default to not forcing HTTPS unless explicitly enabled via TALISMAN_FORCE_HTTPS=1.
+# This avoids potential redirect loops on some hosting providers that already manage HTTPS.
+_default_force_https = "0"
+# Final decision honors explicit env if provided
 force_https = (os.getenv("TALISMAN_FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
 
 
