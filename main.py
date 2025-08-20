@@ -90,7 +90,20 @@ if os.getenv("RECAPTCHA_SITE_KEY"):
 
 # If running behind a reverse proxy, enable ProxyFix so Flask/Talisman see the original scheme/host
 if os.getenv("USE_PROXY_FIX", "1") not in ("0", "false", "False"):
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+    # Trust this many proxy hops (comma-separated X-Forwarded-* entries). Many platforms insert 2+ hops.
+    # Configure via TRUSTED_PROXY_COUNT, defaults to 2 for safer HTTPS detection behind multi-hop proxies.
+    try:
+        _trusted_hops = int(os.getenv("TRUSTED_PROXY_COUNT", "2"))
+    except Exception:
+        _trusted_hops = 2
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=_trusted_hops,
+        x_proto=_trusted_hops,
+        x_host=_trusted_hops,
+        x_port=_trusted_hops,
+        x_prefix=_trusted_hops,
+    )
 
 # Secure cookie flags (HTTPS-only when force_https is enabled)
 app.config.update(
