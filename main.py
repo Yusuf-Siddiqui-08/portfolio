@@ -114,10 +114,10 @@ def _enforce_canonical_host():
     if request.method not in ("GET", "HEAD"):
         return
 
-    # Prefer forwarded host if present, fall back to Host/request.host
+    # Use browser-provided Host header (or Flask's request.host) only.
+    # Do NOT trust X-Forwarded-Host for canonical checks to avoid redirect loops on some platforms.
     raw_host = (
-        request.headers.get("X-Forwarded-Host")
-        or request.headers.get("Host")
+        request.headers.get("Host")
         or request.host
         or ""
     )
