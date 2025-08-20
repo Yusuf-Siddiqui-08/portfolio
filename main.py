@@ -111,13 +111,15 @@ talisman = Talisman(
 )
 
 # Canonical host enforcement (production)
-CANONICAL_HOST = os.getenv("CANONICAL_HOST", "yusufsiddiqui.dev")
-ENFORCE_CANONICAL_HOST = os.getenv("ENFORCE_CANONICAL_HOST", "1").lower() in ("1", "true", "yes")
+# Disable by default to avoid redirect loops on new deployments behind proxies/CDNs.
+# To enable, set ENFORCE_CANONICAL_HOST=1 and provide CANONICAL_HOST (e.g., example.com).
+CANONICAL_HOST = os.getenv("CANONICAL_HOST", "").strip()
+ENFORCE_CANONICAL_HOST = os.getenv("ENFORCE_CANONICAL_HOST", "0").lower() in ("1", "true", "yes")
 
 @app.before_request
 def _enforce_canonical_host():
     # Only enforce for idempotent requests, and only when enabled
-    if not ENFORCE_CANONICAL_HOST:
+    if not ENFORCE_CANONICAL_HOST or not CANONICAL_HOST:
         return
     if request.method not in ("GET", "HEAD"):
         return
