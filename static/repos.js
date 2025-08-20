@@ -325,7 +325,6 @@ function renderRepos(repos, container) {
   });
 
   container.appendChild(fragment);
-  // Initialize ripple behavior for newly added repo buttons
   initButtonRipples();
 }
 
@@ -650,7 +649,6 @@ function themeSplashTransition(event, nextTheme, options = {}) {
   const maxY = Math.max(y, window.innerHeight - y);
   const radius = Math.ceil(Math.hypot(maxX, maxY));
 
-  // Modern path: View Transitions API to reveal actual new theme content
   const supportsVT = typeof document.startViewTransition === 'function';
   if (supportsVT) {
     // Set vars for animation and enable scoped animations

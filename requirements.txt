@@ -2,6 +2,5 @@ flask
 requests
 flask-caching
 flask-limiter
-flask-talisman
 waitress
 psycopg[binary]>=3.1

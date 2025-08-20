@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Local environment files
+.env
+.env.*
+
+# SQLite journal files
+*.sqlite3-journal
+*.db-journal
+
+# PyCharm
+.idea/

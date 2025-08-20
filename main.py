@@ -2,7 +2,6 @@ from flask import Flask, render_template, jsonify, send_from_directory, request,
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
 from waitress import serve
 import os
@@ -18,9 +17,6 @@ try:
 except Exception:  # pragma: no cover
     psycopg = None
 
-# Default Google reCAPTCHA v3 keys (will be used if environment variables are not set)
-os.environ.setdefault("RECAPTCHA_SITE_KEY", "6Lf3qqwrAAAAAM5Hg2lqbmKxeRdXyAegwPwGbdgs")
-os.environ.setdefault("RECAPTCHA_SECRET_KEY", "6Lf3qqwrAAAAALBP2QNzhQl4nbK70W0byrIATN7C")
 
 app = Flask(__name__)
 
@@ -44,7 +40,7 @@ def inject_asset_version():
 # Simple in-memory cache; good enough for small deployments
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 
-# ---------- Security: Flask-Talisman ----------
+# ---------- Security configuration ----------
 # Enforce HTTPS by default, but automatically disable in common local dev environments.
 # You can always override with TALISMAN_FORCE_HTTPS=0/1.
 _dev_flags = {
@@ -63,35 +59,17 @@ _default_force_https = "0" if _is_dev_like else "1"
 # Final decision honors explicit env if provided, else uses smarter default
 force_https = (os.getenv("TALISMAN_FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
 
-# Base CSP; expanded below if CAPTCHA is enabled
-csp = {
-    'default-src': ["'self'"],
-    'base-uri': ["'self'"],
-    'object-src': ["'none'"],
-    'img-src': ["'self'", "data:"],
-    'style-src': ["'self'", "'unsafe-inline'"],  # inline styles used in templates
-    'script-src': ["'self'", "'unsafe-inline'"],  # small inline scripts used in templates
-    'connect-src': ["'self'"],  # XHR/Fetch to same-origin APIs
-    'form-action': ["'self'"],
-    'frame-ancestors': ["'self'"],
-}
 
-# Allow CAPTCHA providers if configured in templates
-if os.getenv("TURNSTILE_SITE_KEY"):
-    csp['script-src'] += ["https://challenges.cloudflare.com"]
-    csp['frame-src'] = csp.get('frame-src', []) + ["https://challenges.cloudflare.com"]
-if os.getenv("HCAPTCHA_SITE_KEY"):
-    csp['script-src'] += ["https://js.hcaptcha.com"]
-    csp['frame-src'] = csp.get('frame-src', []) + ["https://newassets.hcaptcha.com", "https://hcaptcha.com", "https://*.hcaptcha.com"]
-if os.getenv("RECAPTCHA_SITE_KEY"):
-    # Google reCAPTCHA v3 loads scripts from google.com and gstatic.com and uses iframes on google.com
-    csp['script-src'] += ["https://www.google.com", "https://www.gstatic.com"]
-    csp['frame-src'] = csp.get('frame-src', []) + ["https://www.google.com"]
-
-# If running behind a reverse proxy, enable ProxyFix so Flask/Talisman see the original scheme/host
+# If running behind a reverse proxy/CDN (Render, Fly, Heroku, Cloudflare, Nginx, etc.),
+# keep ProxyFix enabled so Flask sees the original client IP, scheme, and host from
+# X-Forwarded-* headers. This is still useful even without Flask-Talisman because:
+#  - request.is_secure reflects X-Forwarded-Proto, improving HTTPS detection and URL generation
+#  - get_remote_address (Flask-Limiter) uses the real client IP instead of the proxy IP
+#  - request.host/host_url reflect the public host for correct redirects and canonical host logic
 if os.getenv("USE_PROXY_FIX", "1") not in ("0", "false", "False"):
-    # Trust this many proxy hops (comma-separated X-Forwarded-* entries). Many platforms insert 2+ hops.
-    # Configure via TRUSTED_PROXY_COUNT, defaults to 2 for safer HTTPS detection behind multi-hop proxies.
+    # Trust this many proxy hops (comma-separated X-Forwarded-* entries).
+    # Many platforms can insert 2+ hops (ingress -> router -> app). Configure via TRUSTED_PROXY_COUNT.
+    # Defaults to 2 for safer HTTPS and client IP detection behind multi-hop proxies.
     try:
         _trusted_hops = int(os.getenv("TRUSTED_PROXY_COUNT", "2"))
     except Exception:
@@ -112,16 +90,59 @@ app.config.update(
     SESSION_COOKIE_SAMESITE=os.getenv("SESSION_COOKIE_SAMESITE", "Lax"),
 )
 
-talisman = Talisman(
-    app,
-    content_security_policy=csp,
-    force_https=force_https,
-    referrer_policy=os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin"),
-    frame_options=os.getenv("FRAME_OPTIONS", "SAMEORIGIN"),
-    strict_transport_security=True,
-    strict_transport_security_preload=False,
-    strict_transport_security_max_age=31536000,
-)
+# Safer HTTPS enforcement using multiple proxy headers (optional via TALISMAN_FORCE_HTTPS)
+# Only applied to idempotent methods and skipped for health/static paths to avoid loops.
+
+def _is_request_https() -> bool:
+    try:
+        if request.is_secure:
+            return True
+    except Exception:
+        pass
+    xf_proto = (request.headers.get("X-Forwarded-Proto") or "").lower()
+    if "https" in xf_proto:
+        return True
+    cf_visitor = (request.headers.get("CF-Visitor") or request.headers.get("Cf-Visitor") or "")
+    if "https" in cf_visitor.lower():
+        return True
+    if (request.headers.get("X-Forwarded-SSL") or "").lower() == "on":
+        return True
+    return False
+
+@app.before_request
+def _enforce_https_safely():
+    # Respect the environment's HTTPS setting
+    if not force_https:
+        return
+    # Limit to idempotent methods to avoid breaking POST/PUT flows
+    if request.method not in ("GET", "HEAD"):
+        return
+    # Skip well-known/static/debug paths
+    path = request.path or "/"
+    if (
+        path.startswith("/api/health") or
+        path.startswith("/__diag") or
+        path.startswith("/project_images/") or
+        path.startswith("/static/") or
+        path == "/favicon.ico" or
+        path == "/robots.txt" or
+        path.startswith("/.well-known/")
+    ):
+        return
+    if _is_request_https():
+        return
+    # Build an https URL preserving host/path/query
+    try:
+        from urllib.parse import urlsplit, urlunsplit
+    except Exception:
+        target = request.url.replace("http://", "https://", 1)
+        return redirect(target, code=301)
+    parts = urlsplit(request.url)
+    # Honor public host from X-Forwarded-Host if present
+    fwd_host = request.headers.get("X-Forwarded-Host")
+    netloc = (fwd_host or parts.netloc)
+    target = urlunsplit(("https", netloc, parts.path, parts.query, parts.fragment))
+    return redirect(target, code=301)
 
 # Canonical host enforcement (production)
 # Disable by default to avoid redirect loops on new deployments behind proxies/CDNs.
@@ -676,6 +697,42 @@ def project_images(filename):
     directory = os.path.join(app.root_path, "project_images")
     return send_from_directory(directory, filename)
 
+
+@app.get("/__diag")
+def diag():
+    # Diagnostics endpoint to visualize proxy headers and HTTPS detection in production
+    info = {
+        "ok": True,
+        "request": {
+            "url": request.url,
+            "base_url": request.base_url,
+            "path": request.path,
+            "method": request.method,
+            "scheme": request.scheme,
+            "host": request.host,
+            "remote_addr": request.remote_addr,
+        },
+        "headers": {
+            "Host": request.headers.get("Host"),
+            "X-Forwarded-Proto": request.headers.get("X-Forwarded-Proto"),
+            "X-Forwarded-For": request.headers.get("X-Forwarded-For"),
+            "X-Forwarded-Host": request.headers.get("X-Forwarded-Host"),
+            "X-Forwarded-Port": request.headers.get("X-Forwarded-Port"),
+            "X-Forwarded-Prefix": request.headers.get("X-Forwarded-Prefix"),
+            "X-Forwarded-SSL": request.headers.get("X-Forwarded-SSL"),
+            "CF-Visitor": request.headers.get("CF-Visitor") or request.headers.get("Cf-Visitor"),
+            "CF-Connecting-IP": request.headers.get("CF-Connecting-IP"),
+        },
+        "computed": {
+            "is_request_https": _is_request_https(),
+            "force_https_env": bool(force_https),
+            "enforce_canonical": bool(ENFORCE_CANONICAL_HOST),
+            "canonical_host": CANONICAL_HOST,
+            "use_proxy_fix": os.getenv("USE_PROXY_FIX", "1"),
+            "trusted_proxy_count": os.getenv("TRUSTED_PROXY_COUNT", "2"),
+        },
+    }
+    return jsonify(info), 200
 
 @app.get("/api/health")
 def api_health():
