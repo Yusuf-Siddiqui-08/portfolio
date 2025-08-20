@@ -2,7 +2,6 @@ from flask import Flask, render_template, jsonify, send_from_directory, request,
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
 from waitress import serve
 import os
@@ -40,9 +39,9 @@ def inject_asset_version():
 # Simple in-memory cache; good enough for small deployments
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 
-# ---------- Security: Flask-Talisman ----------
+# ---------- Security / HTTPS configuration ----------
 # Enforce HTTPS by default, but automatically disable in common local dev environments.
-# You can always override with TALISMAN_FORCE_HTTPS=0/1.
+# You can override with FORCE_HTTPS=0/1.
 _dev_flags = {
     "FLASK_ENV": os.getenv("FLASK_ENV", "").lower(),
     "ENV": os.getenv("ENV", "").lower(),
@@ -57,30 +56,9 @@ _is_dev_like = (
 )
 _default_force_https = "0" if _is_dev_like else "1"
 # Final decision honors explicit env if provided, else uses smarter default
-force_https = (os.getenv("TALISMAN_FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
+force_https = (os.getenv("FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
 
-# Base CSP; expanded below if CAPTCHA is enabled
-csp = {
-    'default-src': ["'self'"],
-    'base-uri': ["'self'"],
-    'object-src': ["'none'"],
-    'img-src': ["'self'", "data:"],
-    'style-src': ["'self'", "'unsafe-inline'"],  # inline styles used in templates
-    'script-src': ["'self'", "'unsafe-inline'"],  # small inline scripts used in templates
-    'connect-src': ["'self'"],  # XHR/Fetch to same-origin APIs
-    'form-action': ["'self'"],
-    'frame-ancestors': ["'self'"],
-}
-
-# Allow CAPTCHA providers if configured in templates
-if os.getenv("TURNSTILE_SITE_KEY"):
-    csp['script-src'] += ["https://challenges.cloudflare.com"]
-    csp['frame-src'] = csp.get('frame-src', []) + ["https://challenges.cloudflare.com"]
-if os.getenv("HCAPTCHA_SITE_KEY"):
-    csp['script-src'] += ["https://js.hcaptcha.com"]
-    csp['frame-src'] = csp.get('frame-src', []) + ["https://newassets.hcaptcha.com", "https://hcaptcha.com", "https://*.hcaptcha.com"]
-
-# If running behind a reverse proxy, enable ProxyFix so Flask/Talisman see the original scheme/host
+# If running behind a reverse proxy, enable ProxyFix so Flask sees the original scheme/host
 if os.getenv("USE_PROXY_FIX", "1") not in ("0", "false", "False"):
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
@@ -89,17 +67,6 @@ app.config.update(
     SESSION_COOKIE_SECURE=True if force_https else False,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE=os.getenv("SESSION_COOKIE_SAMESITE", "Lax"),
-)
-
-talisman = Talisman(
-    app,
-    content_security_policy=csp,
-    force_https=force_https,
-    referrer_policy=os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin"),
-    frame_options=os.getenv("FRAME_OPTIONS", "SAMEORIGIN"),
-    strict_transport_security=True,
-    strict_transport_security_preload=False,
-    strict_transport_security_max_age=31536000,
 )
 
 # Canonical host enforcement (production)
