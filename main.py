@@ -114,13 +114,22 @@ def _enforce_canonical_host():
     if request.method not in ("GET", "HEAD"):
         return
 
-    # Use browser-provided Host header (or Flask's request.host) only.
-    # Do NOT trust X-Forwarded-Host for canonical checks to avoid redirect loops on some platforms.
-    raw_host = (
-        request.headers.get("Host")
-        or request.host
-        or ""
-    )
+    # Collect possible hosts from proxy/CDN headers and the request to avoid redirect loops.
+    candidates = []
+
+    # Many providers (e.g., Vercel, some CDNs) set X-Forwarded-Host to the public host.
+    fwd_host = request.headers.get("X-Forwarded-Host")
+    if fwd_host:
+        candidates.append(fwd_host)
+
+    # Browser-provided Host header as seen by the app (may be internal on some platforms).
+    hdr_host = request.headers.get("Host")
+    if hdr_host:
+        candidates.append(hdr_host)
+
+    # Flask's computed host fallback.
+    if request.host:
+        candidates.append(request.host)
 
     def _norm_host(h: str) -> str:
         # Take first value if comma-separated, strip port, lowercase
@@ -129,31 +138,36 @@ def _enforce_canonical_host():
             h = h.split(":", 1)[0]
         return h
 
-    host = _norm_host(raw_host)
+    norm_candidates = [_norm_host(h) for h in candidates if h]
     canonical = _norm_host(CANONICAL_HOST)
-    if not host:
+
+    if not norm_candidates:
         return
 
     # Skip localhost/dev-like hosts
-    if host == "localhost" or host.startswith("127."):
+    if any(h == "localhost" or h.startswith("127.") for h in norm_candidates):
         return
 
-    if host != canonical:
-        # Build redirect URL to canonical host with correct scheme, preserving path and query
-        try:
-            from urllib.parse import urlsplit, urlunsplit
-        except Exception:
-            # Fallback: simple replace (should rarely happen)
-            target = request.url.replace(f"//{raw_host}", f"//{CANONICAL_HOST}", 1)
-            if force_https and request.scheme != "https":
-                target = target.replace("http://", "https://", 1)
-            return redirect(target, code=301)
+    # If any observed host already matches the canonical host, do nothing.
+    if canonical in norm_candidates:
+        return
 
-        parts = urlsplit(request.url)
-        scheme = "https" if force_https else parts.scheme or "http"
-        netloc = CANONICAL_HOST  # honor any port in env if explicitly set
-        target = urlunsplit((scheme, netloc, parts.path, parts.query, parts.fragment))
+    # Otherwise, build redirect URL to canonical host with correct scheme, preserving path and query.
+    try:
+        from urllib.parse import urlsplit, urlunsplit
+    except Exception:
+        # Fallback: simple replace (should rarely happen)
+        raw_host = hdr_host or request.host or ""
+        target = request.url.replace(f"//{raw_host}", f"//{CANONICAL_HOST}", 1)
+        if force_https and request.scheme != "https":
+            target = target.replace("http://", "https://", 1)
         return redirect(target, code=301)
+
+    parts = urlsplit(request.url)
+    scheme = "https" if force_https else parts.scheme or "http"
+    netloc = CANONICAL_HOST  # honor any port in env if explicitly set
+    target = urlunsplit((scheme, netloc, parts.path, parts.query, parts.fragment))
+    return redirect(target, code=301)
 
 DB_PATH = os.getenv("DB_PATH") or os.path.join(app.root_path, "app.db")
 
