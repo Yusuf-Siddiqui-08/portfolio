@@ -6,10 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Get in touch with Yusuf Siddiqui. Email, phone, and GitHub profile.">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
-  <script>(function(){try{var t=localStorage.getItem('theme');var th=t||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme', th);}catch(e){}})();</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
 </head>
-<body>
+<body{% if recaptcha_site_key %} data-recaptcha-site-key="{{ recaptcha_site_key }}"{% endif %}>
   <header class="site-header">
     <div class="container">
       <div class="brand">
@@ -133,12 +132,12 @@
           <div class="form-field">
             <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
           </div>
-          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
           {% elif hcaptcha_site_key %}
           <div class="form-field">
             <div class="h-captcha" data-sitekey="{{ hcaptcha_site_key }}"></div>
           </div>
-          <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+          {% elif recaptcha_site_key %}
+          <!-- Google reCAPTCHA v3: no visible widget; token is fetched on submit -->
           {% endif %}
 
           <div id="contact-status" class="note" role="status" aria-live="polite"></div>

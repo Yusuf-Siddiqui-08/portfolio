@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, send_from_directory, request,
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
 from waitress import serve
 import os
@@ -16,6 +17,10 @@ try:
     import psycopg  # psycopg3
 except Exception:  # pragma: no cover
     psycopg = None
+
+# Default Google reCAPTCHA v3 keys (will be used if environment variables are not set)
+os.environ.setdefault("RECAPTCHA_SITE_KEY", "6Lf3qqwrAAAAAM5Hg2lqbmKxeRdXyAegwPwGbdgs")
+os.environ.setdefault("RECAPTCHA_SECRET_KEY", "6Lf3qqwrAAAAALBP2QNzhQl4nbK70W0byrIATN7C")
 
 app = Flask(__name__)
 
@@ -39,9 +44,9 @@ def inject_asset_version():
 # Simple in-memory cache; good enough for small deployments
 cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 
-# ---------- Security / HTTPS configuration ----------
+# ---------- Security: Flask-Talisman ----------
 # Enforce HTTPS by default, but automatically disable in common local dev environments.
-# You can override with FORCE_HTTPS=0/1.
+# You can always override with TALISMAN_FORCE_HTTPS=0/1.
 _dev_flags = {
     "FLASK_ENV": os.getenv("FLASK_ENV", "").lower(),
     "ENV": os.getenv("ENV", "").lower(),
@@ -56,9 +61,34 @@ _is_dev_like = (
 )
 _default_force_https = "0" if _is_dev_like else "1"
 # Final decision honors explicit env if provided, else uses smarter default
-force_https = (os.getenv("FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
+force_https = (os.getenv("TALISMAN_FORCE_HTTPS", _default_force_https) not in ("0", "false", "False"))
 
-# If running behind a reverse proxy, enable ProxyFix so Flask sees the original scheme/host
+# Base CSP; expanded below if CAPTCHA is enabled
+csp = {
+    'default-src': ["'self'"],
+    'base-uri': ["'self'"],
+    'object-src': ["'none'"],
+    'img-src': ["'self'", "data:"],
+    'style-src': ["'self'", "'unsafe-inline'"],  # inline styles used in templates
+    'script-src': ["'self'", "'unsafe-inline'"],  # small inline scripts used in templates
+    'connect-src': ["'self'"],  # XHR/Fetch to same-origin APIs
+    'form-action': ["'self'"],
+    'frame-ancestors': ["'self'"],
+}
+
+# Allow CAPTCHA providers if configured in templates
+if os.getenv("TURNSTILE_SITE_KEY"):
+    csp['script-src'] += ["https://challenges.cloudflare.com"]
+    csp['frame-src'] = csp.get('frame-src', []) + ["https://challenges.cloudflare.com"]
+if os.getenv("HCAPTCHA_SITE_KEY"):
+    csp['script-src'] += ["https://js.hcaptcha.com"]
+    csp['frame-src'] = csp.get('frame-src', []) + ["https://newassets.hcaptcha.com", "https://hcaptcha.com", "https://*.hcaptcha.com"]
+if os.getenv("RECAPTCHA_SITE_KEY"):
+    # Google reCAPTCHA v3 loads scripts from google.com and gstatic.com and uses iframes on google.com
+    csp['script-src'] += ["https://www.google.com", "https://www.gstatic.com"]
+    csp['frame-src'] = csp.get('frame-src', []) + ["https://www.google.com"]
+
+# If running behind a reverse proxy, enable ProxyFix so Flask/Talisman see the original scheme/host
 if os.getenv("USE_PROXY_FIX", "1") not in ("0", "false", "False"):
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
@@ -67,6 +97,17 @@ app.config.update(
     SESSION_COOKIE_SECURE=True if force_https else False,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE=os.getenv("SESSION_COOKIE_SAMESITE", "Lax"),
+)
+
+talisman = Talisman(
+    app,
+    content_security_policy=csp,
+    force_https=force_https,
+    referrer_policy=os.getenv("REFERRER_POLICY", "strict-origin-when-cross-origin"),
+    frame_options=os.getenv("FRAME_OPTIONS", "SAMEORIGIN"),
+    strict_transport_security=True,
+    strict_transport_security_preload=False,
+    strict_transport_security_max_age=31536000,
 )
 
 # Canonical host enforcement (production)
@@ -223,6 +264,7 @@ def _fetch_github_repos(username: str):
     """
     Fetch repositories for the given GitHub username with retry, timeout, and caching.
     Caches only successful responses.
+    Additionally, enriches each repo with its topics (as 'topics': [str, ...]).
     """
     cache_key = f"github_repos:{username}"
     cached = cache.get(cache_key)
@@ -240,6 +282,21 @@ def _fetch_github_repos(username: str):
     backoff = 1.0  # seconds
     last_error = None
 
+    def _fetch_topics(owner: str, repo: str):
+        try:
+            t_url = f"https://api.github.com/repos/{owner}/{repo}/topics"
+            # GitHub topics are included in this endpoint; standard accept works
+            t_resp = requests.get(t_url, headers=headers, timeout=5)
+            if t_resp.status_code == 200:
+                t_json = t_resp.json() or {}
+                topics = t_json.get("names") or t_json.get("topics") or []
+                if isinstance(topics, list):
+                    # normalize to strings
+                    return [str(x) for x in topics if isinstance(x, (str, int, float))]
+        except Exception:
+            pass
+        return []
+
     for attempt in range(1, max_attempts + 1):
         try:
             resp = requests.get(url, params=params, headers=headers, timeout=7)
@@ -247,6 +304,15 @@ def _fetch_github_repos(username: str):
 
             if status == 200:
                 data = resp.json()
+                # Enrich with topics (best-effort; ignore errors)
+                owner = username
+                for r in data:
+                    if isinstance(r, dict) and "topics" not in r:
+                        name = r.get("name")
+                        if not name:
+                            r["topics"] = []
+                            continue
+                        r["topics"] = _fetch_topics(owner, name)
                 cache.set(cache_key, data, timeout=300)
                 return data, None
 
@@ -325,7 +391,26 @@ def contact():
     # Expose CAPTCHA site keys to template; widgets render only if configured
     turnstile_site_key = os.getenv("TURNSTILE_SITE_KEY")
     hcaptcha_site_key = os.getenv("HCAPTCHA_SITE_KEY")
-    return render_template("contact.html", turnstile_site_key=turnstile_site_key, hcaptcha_site_key=hcaptcha_site_key)
+    recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY")
+
+    # Only enable Google reCAPTCHA front-end on the canonical host (or if explicitly allowed in dev)
+    host_hdr = (request.headers.get("Host") or request.host or "").split(",", 1)[0].strip().lower()
+    if ":" in host_hdr:
+        host_hdr = host_hdr.split(":", 1)[0]
+    canonical = (os.getenv("CANONICAL_HOST", "yusufsiddiqui.dev") or "").strip().lower()
+    allow_dev = os.getenv("ALLOW_RECAPTCHA_ON_DEV", "0").lower() in ("1", "true", "yes")
+    is_dev_like = (host_hdr == "localhost" or host_hdr.startswith("127."))
+    if recaptcha_site_key and not allow_dev:
+        # Disable the recaptcha widget on non-canonical or dev-like hosts to avoid Google warning overlays
+        if is_dev_like or (canonical and host_hdr and host_hdr != canonical):
+            recaptcha_site_key = None
+
+    return render_template(
+        "contact.html",
+        turnstile_site_key=turnstile_site_key,
+        hcaptcha_site_key=hcaptcha_site_key,
+        recaptcha_site_key=recaptcha_site_key,
+    )
 
 
 @app.route("/api/github/repos")
@@ -375,8 +460,21 @@ def api_contact():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
     turnstile_secret = os.getenv("TURNSTILE_SECRET_KEY")
     hcaptcha_secret = os.getenv("HCAPTCHA_SECRET_KEY")
+    recaptcha_secret = os.getenv("RECAPTCHA_SECRET_KEY")
 
-    # Prefer Turnstile if both configured
+    # On dev-like hosts (localhost/127.*) or non-canonical hosts, optionally bypass CAPTCHA for local testing
+    host_hdr = (request.headers.get("Host") or request.host or "").split(",", 1)[0].strip().lower()
+    if ":" in host_hdr:
+        host_hdr = host_hdr.split(":", 1)[0]
+    canonical = (os.getenv("CANONICAL_HOST", "yusufsiddiqui.dev") or "").strip().lower()
+    is_dev_like = (host_hdr == "localhost" or host_hdr.startswith("127."))
+    require_on_dev = os.getenv("CAPTCHA_REQUIRE_ON_DEV", "0").lower() in ("1", "true", "yes")
+    if (is_dev_like or (canonical and host_hdr and host_hdr != canonical)) and not require_on_dev:
+        turnstile_secret = None
+        hcaptcha_secret = None
+        recaptcha_secret = None
+
+    # Prefer Turnstile if multiple are configured, then hCaptcha, then reCAPTCHA v3
     if turnstile_secret:
         token = (data.get("cf_turnstile_token") or data.get("cf-turnstile-response") or "").strip()
         if not token:
@@ -404,6 +502,33 @@ def api_contact():
             )
             vjson = vresp.json() if vresp.ok else {}
             if not vjson.get("success"):
+                return jsonify({"ok": False, "error": "captcha_failed"}), 400
+        except Exception:
+            return jsonify({"ok": False, "error": "captcha_failed"}), 400
+    elif recaptcha_secret:
+        token = (data.get("recaptcha_token") or data.get("g-recaptcha-response") or "").strip()
+        if not token:
+            return jsonify({"ok": False, "error": "captcha_required"}), 400
+        try:
+            vresp = requests.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                data={"secret": recaptcha_secret, "response": token, "remoteip": ip},
+                timeout=5,
+            )
+            vjson = vresp.json() if vresp.ok else {}
+            # Validate success, score threshold, and action if provided
+            if not vjson.get("success"):
+                return jsonify({"ok": False, "error": "captcha_failed"}), 400
+            score = vjson.get("score")
+            action = vjson.get("action")
+            if score is not None:
+                try:
+                    if float(score) < float(os.getenv("RECAPTCHA_MIN_SCORE", "0.5")):
+                        return jsonify({"ok": False, "error": "captcha_failed"}), 400
+                except Exception:
+                    pass
+            # If action returned, ensure it matches our expected action
+            if action and action != "contact":
                 return jsonify({"ok": False, "error": "captcha_failed"}), 400
         except Exception:
             return jsonify({"ok": False, "error": "captcha_failed"}), 400
@@ -467,7 +592,9 @@ def api_search():
                 "description": r.get("description"),
                 "language": r.get("language"),
                 "stars": r.get("stargazers_count", 0),
+                "forks": r.get("forks_count", 0),
                 "updated_at": r.get("pushed_at") or r.get("updated_at"),
+                "topics": r.get("topics") or [],
             })
 
     results.sort(key=lambda x: (x["stars"], x["updated_at"] or ""), reverse=True)

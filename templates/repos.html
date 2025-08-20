@@ -7,7 +7,6 @@
   <meta name="description" content="Live list of GitHub repositories for Yusuf-Siddiqui-08, fetched directly from GitHub.">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ ASSET_VERSION }}" type="image/svg+xml">
   <link rel="alternate" type="application/rss+xml" title="Repo updates RSS" href="/feed.xml">
-  <script>(function(){try{var t=localStorage.getItem('theme');var th=t||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme', th);}catch(e){}})();</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ ASSET_VERSION }}">
 </head>
 <body>
@@ -174,7 +173,7 @@
         <h2 id="all-projects" class="mt-24 section-title">My Repositories</h2>
         <div class="repo-search-wrap">
           <label for="repo-search" class="sr-only">Search repositories</label>
-          <input id="repo-search" type="search" placeholder="Search repositories by name, description, language, or topic…" aria-label="Search repositories" class="repo-search-input">
+          <input id="repo-search" type="search" placeholder="Search repositories by name, description, language, or tag…" aria-label="Search repositories by name, description, language, or tag" class="repo-search-input">
         </div>
         <p class="note">Results are fetched from this site’s API and cached for speed.</p>
 
@@ -204,6 +203,6 @@
     </div>
   </footer>
 
-  <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}"></script>
+  <script src="{{ url_for('static', filename='repos.js') }}?v={{ ASSET_VERSION }}" defer></script>
 </body>
 </html>

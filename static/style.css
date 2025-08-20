@@ -317,12 +317,15 @@ html {
 
 .btn {
   position: relative;
-  display: inline-block;
+  display: inline-flex; /* inline-flex ensures consistent vertical sizing */
+  align-items: center;  /* center icon/text vertically */
+  gap: 8px;            /* consistent spacing between icon and text when present */
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text);
   text-decoration: none;
+  line-height: 1.2;     /* prevent tall line-height from affecting button height */
   background: 
     linear-gradient(135deg, 
       rgba(27, 16, 58, 0.4) 0%,
@@ -521,6 +524,17 @@ html {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Ensure inner content wrapper inserted by JS aligns consistently */
+.btn .btn-content,
+.btn .icon-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Prevent SVGs from adding extra baseline height inside buttons */
+.btn svg { display: block; }
 
 .feature-list {
   margin: 0;
@@ -1718,6 +1732,29 @@ html[data-theme="dark"] #theme-toggle .icon-moon { display: inline-block; }
 .repo-card > * {
   position: relative;
   z-index: 1;
+}
+
+/* Tags (topics) styling */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px 0;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(99,102,241,0.12));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.tag:hover {
+  border-color: rgba(255,255,255,0.2);
 }
 
 /* Muted section wrapper used on repos */

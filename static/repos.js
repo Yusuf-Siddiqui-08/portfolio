@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Wire up contact form behavior if present
   initContactForm();
 
+  // Load CAPTCHA vendor scripts dynamically if needed
+  initCaptchaLoaders();
+
   // Initial load for repos list (repos page only)
   fetchRepos();
 });
@@ -260,6 +263,7 @@ function renderRepos(repos, container) {
     const stars = repo.stargazers_count ?? repo.stars ?? 0;
     const forks = repo.forks_count ?? repo.forks ?? 0;
     const updatedAt = repo.updated_at || repo.pushed_at || '';
+    const topics = Array.isArray(repo.topics) ? repo.topics : [];
 
     const card = document.createElement('article');
     card.className = 'repo-card';
@@ -283,6 +287,19 @@ function renderRepos(repos, container) {
     desc.style.margin = '10px 0 12px 0';
     desc.textContent = description;
 
+    // Tags (topics)
+    let tagsWrap = null;
+    if (topics && topics.length) {
+      tagsWrap = document.createElement('div');
+      tagsWrap.className = 'tags';
+      topics.slice(0, 6).forEach(t => {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = String(t);
+        tagsWrap.appendChild(tag);
+      });
+    }
+
     const meta = document.createElement('div');
     meta.style.display = 'flex';
     meta.style.flexWrap = 'wrap';
@@ -302,6 +319,7 @@ function renderRepos(repos, container) {
 
     card.appendChild(link);
     card.appendChild(desc);
+    if (tagsWrap) card.appendChild(tagsWrap);
     card.appendChild(meta);
     fragment.appendChild(card);
   });
@@ -322,6 +340,34 @@ function initRepoSearch() {
   input.addEventListener('input', (e) => {
     debounced(e.target.value || '');
   });
+}
+
+function initCaptchaLoaders() {
+  // Cloudflare Turnstile
+  if (document.querySelector('.cf-turnstile') && !document.querySelector('script[src^="https://challenges.cloudflare.com/turnstile/"]')) {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }
+  // hCaptcha
+  if (document.querySelector('.h-captcha') && !document.querySelector('script[src^="https://js.hcaptcha.com/1/api.js"]')) {
+    const s = document.createElement('script');
+    s.src = 'https://js.hcaptcha.com/1/api.js';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }
+  // Google reCAPTCHA v3
+  const rk = document.body && document.body.dataset ? document.body.dataset.recaptchaSiteKey : null;
+  if (rk && !window.RECAPTCHA_SITE_KEY) {
+    try { window.RECAPTCHA_SITE_KEY = rk; } catch (e) {}
+  }
+  if (rk && !document.querySelector('script[src^="https://www.google.com/recaptcha/api.js?"]')) {
+    const s = document.createElement('script');
+    s.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(rk);
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }
 }
 
 function initContactForm() {
@@ -351,7 +397,7 @@ function initContactForm() {
       website: document.getElementById('website')?.value || ''
     };
 
-    // Include CAPTCHA token if available
+    // Include CAPTCHA token if available (Turnstile / hCaptcha)
     const cfTokenEl = document.querySelector('input[name="cf-turnstile-response"]');
     if (cfTokenEl && cfTokenEl.value) {
       payload.cf_turnstile_token = cfTokenEl.value;
@@ -359,6 +405,21 @@ function initContactForm() {
     const hcTokenEl = document.querySelector('textarea[name="h-captcha-response"], input[name="h-captcha-response"]');
     if (hcTokenEl && hcTokenEl.value) {
       payload.hcaptcha_token = hcTokenEl.value;
+    }
+
+    // Google reCAPTCHA v3: if grecaptcha is available and a site key is provided, get a token
+    if (window.grecaptcha && window.RECAPTCHA_SITE_KEY) {
+      try {
+        // Ensure API is ready before executing
+        await new Promise((resolve) => {
+          if (grecaptcha.execute) return resolve();
+          grecaptcha.ready(resolve);
+        });
+        const token = await grecaptcha.execute(window.RECAPTCHA_SITE_KEY, { action: 'contact' });
+        if (token) payload.recaptcha_token = token;
+      } catch (e2) {
+        // If token fetch fails, continue; server will reject if required
+      }
     }
 
     try {
@@ -371,6 +432,7 @@ function initContactForm() {
       if (!res.ok || !json.ok) {
         const msg = (json && json.error === 'validation_error') ? 'Please fill in all fields correctly.' :
                     (json && json.error === 'rate_limited') ? 'Too many messages from your IP. Please try again later.' :
+                    (json && (json.error === 'captcha_required' || json.error === 'captcha_failed')) ? 'Please complete the CAPTCHA verification.' :
                     'Something went wrong. Please try again.';
         setStatus(msg, false);
       } else {
