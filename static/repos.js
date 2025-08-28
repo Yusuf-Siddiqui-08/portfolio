@@ -435,7 +435,13 @@ function initContactForm() {
                     'Something went wrong. Please try again.';
         setStatus(msg, false);
       } else {
-        setStatus('Thanks! Your message has been sent.');
+        try {
+          const ts = typeof json.created_at === 'number' ? json.created_at : Math.floor(Date.now() / 1000);
+          const when = new Date(ts * 1000).toLocaleString();
+          setStatus('Thanks! Your message was sent on ' + when + '.');
+        } catch (e) {
+          setStatus('Thanks! Your message has been sent.');
+        }
         form.reset();
       }
     } catch (err) {

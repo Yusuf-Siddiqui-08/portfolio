@@ -599,7 +599,7 @@ def api_contact():
             )
             msg_id = cur.lastrowid
 
-    return jsonify({"ok": True, "id": msg_id}), 201
+    return jsonify({"ok": True, "id": msg_id, "created_at": ts}), 201
 
 
 @app.get("/api/search")
