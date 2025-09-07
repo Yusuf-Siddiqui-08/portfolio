@@ -10,6 +10,7 @@ import requests
 import sqlite3
 from html import escape
 from datetime import datetime, timezone
+import resend
 
 # Try to import psycopg (PostgreSQL driver); optional for local SQLite
 try:
@@ -26,11 +27,32 @@ ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
 # Flask-Limiter configuration (in-memory by default; configurable via env)
 _default_rate = (os.getenv("DEFAULT_RATE_LIMIT", "") or "").strip()
 _default_limits = [_default_rate] if _default_rate else None
+# Robust rate limit key to reduce collisions behind proxies/CDNs by combining client IP and UA
+# Falls back to get_remote_address if headers are missing. This helps avoid "burst cache retrials
+# collision" when many clients share an egress IP.
+from typing import Optional
+
+def _rate_limit_key() -> str:
+    try:
+        ip = get_remote_address() or "unknown"
+        ua = (request.headers.get("User-Agent") or "").strip()[:80]
+        # Namespace to prevent cross-endpoint collisions if storage is shared
+        path = (request.path or "/")
+        return f"ip:{ip}|ua:{ua}|path:{path}"
+    except Exception:
+        return "ip:unknown|ua:unknown|path:unknown"
+
+# Choose storage with an optional in-memory namespace to reduce key collisions across processes
+_rl_storage = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+_rl_strategy = os.getenv("RATELIMIT_STRATEGY", "fixed-window-elastic-expiry")
+
 limiter = Limiter(
-    get_remote_address,
+    key_func=_rate_limit_key,
     app=app,
-    storage_uri=os.getenv("RATELIMIT_STORAGE_URI", "memory://"),
+    storage_uri=_rl_storage,
     default_limits=_default_limits,
+    strategy=_rl_strategy,
+    headers_enabled=True,
 )
 
 @app.context_processor
@@ -478,8 +500,26 @@ def api_github_repos():
     return jsonify({"ok": True, "username": username, "repos": data})
 
 
+def _send_contact_email_notification(name: str, email: str, message: str):
+    if not resend.api_key:
+        resend.api_key = os.getenv("RESEND_API_KEY")
+    to_addr = os.getenv("EMAIL_TO_ADDRESS")
+    from_addr = os.getenv("EMAIL_FROM_ADDRESS", "Yusuf's Portfolio <onboarding@resend.dev>")
+    subject = f"New Contact Form Message from {name}"
+    html_body = f"""<h1>Name: {name}</h1>
+<h1>Email: {email}</h1>
+<h3>Message:</h3>
+<p>{message}</p>"""
+    params: resend.Emails.SendParams = {
+        "from": from_addr,
+        "to": [to_addr],
+        "subject": subject,
+        "html": html_body,
+    }
+    return resend.Emails.send(params)
+
 @app.post("/api/contact")
-@limiter.limit(os.getenv("RL_CONTACT", "3 per minute; 10 per hour"))
+@limiter.limit(os.getenv("RL_CONTACT", "3 per minute; 10 per hour; 30 per day"))
 def api_contact():
     data = request.get_json(silent=True) or request.form
 
@@ -491,8 +531,36 @@ def api_contact():
     email = (data.get("email") or "").strip()
     message = (data.get("message") or "").strip()
 
-    if not name or "@" not in email or len(message) < 5:
-        return jsonify({"ok": False, "error": "validation_error"}), 400
+    # Enhanced validation
+    # - Name: at least 2 characters after trimming
+    # - Email: basic RFC5322-like regex (not perfect, but robust enough for most cases)
+    # - Message: at least 20 characters to reduce spam/noise; configurable via env CONTACT_MIN_MESSAGE_LEN
+    try:
+        import re
+        email_regex = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
+    except Exception:
+        email_regex = None
+
+    min_message_len = 0
+    try:
+        min_message_len = int(os.getenv("CONTACT_MIN_MESSAGE_LEN", "20"))
+    except Exception:
+        min_message_len = 20
+
+    valid_name = len(name) >= 2
+    valid_email = bool(email_regex.match(email)) if email_regex else ("@" in email and "." in email)
+    valid_message = len(message) >= min_message_len
+
+    if not (valid_name and valid_email and valid_message):
+        return jsonify({
+            "ok": False,
+            "error": "validation_error",
+            "details": {
+                "name": "too_short" if not valid_name else None,
+                "email": "invalid" if not valid_email else None,
+                "message": f"too_short_min_{min_message_len}" if not valid_message else None,
+            }
+        }), 400
 
     # CAPTCHA verification (if configured)
     ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
@@ -511,6 +579,55 @@ def api_contact():
         turnstile_secret = None
         hcaptcha_secret = None
         recaptcha_secret = None
+        # Extra abuse protection when CAPTCHA is bypassed (local/non-canonical):
+        try:
+            # Build a composite key using real client IP (from ProxyFix) and user agent
+            real_ip = get_remote_address()
+            ua_local = (request.headers.get("User-Agent") or "").strip()[:120]
+            k_prefix = os.getenv("CONTACT_BYPASS_KEY_PREFIX", "contact_bypass")
+            window_s = int(os.getenv("CONTACT_BYPASS_WINDOW_SEC", "60"))
+            burst_limit = int(os.getenv("CONTACT_BYPASS_BURST", "1"))
+            hourly_limit = int(os.getenv("CONTACT_BYPASS_HOURLY", "3"))
+            day_limit = int(os.getenv("CONTACT_BYPASS_DAILY", "10"))
+
+            def _inc_and_get(key: str, timeout: int):
+                val = cache.get(key)
+                try:
+                    cur = int(val or 0) + 1
+                except Exception:
+                    cur = 1
+                cache.set(key, cur, timeout=timeout)
+                return cur
+
+            # Short window burst limit (per minute by default)
+            # Add a tiny rolling window bucket suffix to reduce thundering-herd collisions
+            burst_bucket = int(time.time() // max(1, min(window_s, 10)))
+            burst_key = f"{k_prefix}:burst:{real_ip}:{ua_local}:{burst_bucket}"
+            burst = _inc_and_get(burst_key, window_s)
+            if burst > burst_limit:
+                return jsonify({"ok": False, "error": "rate_limited", "reason": "burst"}), 429
+
+            # Hourly cap
+            hourly_key = f"{k_prefix}:hour:{real_ip}:{ua_local}:{int(time.time()//3600)}"
+            hourly = _inc_and_get(hourly_key, 3700)
+            if hourly > hourly_limit:
+                return jsonify({"ok": False, "error": "rate_limited", "reason": "hourly"}), 429
+
+            # Daily cap
+            daily_key = f"{k_prefix}:day:{real_ip}:{ua_local}:{int(time.time()//86400)}"
+            daily = _inc_and_get(daily_key, 90000)
+            if daily > day_limit:
+                return jsonify({"ok": False, "error": "rate_limited", "reason": "daily"}), 429
+
+            # Prevent repeated identical messages from same IP within 10 minutes
+            msg_fingerprint = f"{k_prefix}:dedupe:{real_ip}:{hash((ua_local, (data.get('message') or '').strip()) )}"
+            if cache.get(msg_fingerprint):
+                return jsonify({"ok": False, "error": "duplicate", "reason": "recent_duplicate"}), 429
+            cache.set(msg_fingerprint, 1, timeout=int(os.getenv("CONTACT_BYPASS_DEDUPE_SEC", "600")))
+        except Exception as _e:
+            # Fail-closed to conservative behavior? Here we fail-open to not break local dev unexpectedly,
+            # but we still have the global Flask-Limiter decorator as a backstop.
+            pass
 
     # Prefer Turnstile if multiple are configured, then hCaptcha, then reCAPTCHA v3
     if turnstile_secret:
@@ -598,6 +715,13 @@ def api_contact():
                 (name, email, message, ts, ip, ua),
             )
             msg_id = cur.lastrowid
+
+    # Send email notification (best-effort, fails silently)
+    try:
+        _send_contact_email_notification(name=name, email=email, message=message)
+    except Exception as e:
+        # Log and ignore to ensure the client still gets a success response
+        print(f"[api_contact] Failed to dispatch email notification: {e}")
 
     return jsonify({"ok": True, "id": msg_id, "created_at": ts}), 201
 
@@ -789,9 +913,15 @@ def handle_500(e):
 # Rate limit (429) handler to return JSON for API endpoints
 @app.errorhandler(429)
 def handle_429(e):
+    # Provide consistent JSON with Retry-After header to help clients back off
+    retry_after = getattr(e, "retry_after", None)
+    headers = {"Content-Type": "application/json; charset=utf-8"}
+    if retry_after is not None:
+        try:
+            headers["Retry-After"] = str(int(retry_after))
+        except Exception:
+            pass
     if request.path.startswith("/api/"):
-        # Flask-Limiter attaches a description; include Retry-After if available
-        retry_after = getattr(e, "retry_after", None)
         resp = {
             "ok": False,
             "error": "rate_limited",
@@ -799,8 +929,10 @@ def handle_429(e):
             "path": request.path,
             "timestamp": int(time.time()),
         }
-        return jsonify(resp), 429
-    # For non-API paths, just show 429 text
+        return jsonify(resp), 429, headers
+    # For non-API paths, return plain text with Retry-After if present
+    if "Retry-After" in headers:
+        return ("Too Many Requests", 429, {**headers, "Content-Type": "text/plain; charset=utf-8"})
     return ("Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8"})
 
 
