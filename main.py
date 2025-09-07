@@ -51,7 +51,7 @@ limiter = Limiter(
     app=app,
     storage_uri=_rl_storage,
     default_limits=_default_limits,
-    strategy=_rl_strategy,
+    strategy="fixed-window",
     headers_enabled=True,
 )
 
@@ -300,6 +300,35 @@ def _init_db():
             pass
 
 _init_db()
+
+# Optional: clear the database if CLEAR_DB=1
+try:
+    if (os.getenv("CLEAR_DB") or "0").strip() == "1":
+        with _get_db() as conn:
+            cur = conn.cursor()
+            if _is_postgres():
+                try:
+                    cur.execute("TRUNCATE TABLE contact_messages RESTART IDENTITY CASCADE;")
+                except Exception:
+                    try:
+                        cur.execute("DELETE FROM contact_messages;")
+                    except Exception:
+                        pass
+            else:
+                try:
+                    cur.execute("DELETE FROM contact_messages;")
+                except Exception:
+                    pass
+            try:
+                conn.commit()
+            except Exception:
+                pass
+        print("[startup] CLEAR_DB=1 detected: cleared table contact_messages")
+except Exception as e:
+    try:
+        print(f"[startup] CLEAR_DB handling failed: {e}")
+    except Exception:
+        pass
 
 # Log which DB is being used (avoid printing secrets)
 try:

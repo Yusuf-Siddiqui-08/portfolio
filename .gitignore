@@ -18,9 +18,20 @@ ENV/
 .env
 .env.*
 
-# SQLite journal files
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+*.sqlitedb
+*.mdb
+*.accdb
+
+# SQLite journal/WAL/SHM files
 *.sqlite3-journal
 *.db-journal
+*-journal
+*-wal
+*-shm
 
 # PyCharm
 .idea/
